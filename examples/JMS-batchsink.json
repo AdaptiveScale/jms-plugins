@@ -1,0 +1,107 @@
+{
+    "artifact": {
+        "name": "cdap-data-pipeline",
+        "version": "6.3.0-SNAPSHOT",
+        "scope": "SYSTEM"
+    },
+    "description": "Read records from a json file and generate a MapMessage for each one of them.",
+    "name": "JMS-batchsink",
+    "config": {
+        "resources": {
+            "memoryMB": 2048,
+            "virtualCores": 1
+        },
+        "driverResources": {
+            "memoryMB": 2048,
+            "virtualCores": 1
+        },
+        "connections": [
+            {
+                "from": "File",
+                "to": "JMS"
+            }
+        ],
+        "comments": [],
+        "postActions": [],
+        "properties": {},
+        "processTimingEnabled": true,
+        "stageLoggingEnabled": false,
+        "stages": [
+            {
+                "name": "File",
+                "plugin": {
+                    "name": "File",
+                    "type": "batchsource",
+                    "label": "File",
+                    "artifact": {
+                        "name": "core-plugins",
+                        "version": "2.6.0-SNAPSHOT",
+                        "scope": "USER"
+                    },
+                    "properties": {
+                        "referenceName": "JMS",
+                        "path": "${PATH}",
+                        "format": "json",
+                        "delimiter": ",",
+                        "skipHeader": "true",
+                        "filenameOnly": "false",
+                        "recursive": "false",
+                        "ignoreNonExistingFolders": "false",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"surname\",\"type\":\"string\"},{\"name\":\"age\",\"type\":\"int\"}]}"
+                    }
+                },
+                "outputSchema": [
+                    {
+                        "name": "etlSchemaBody",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"surname\",\"type\":\"string\"},{\"name\":\"age\",\"type\":\"int\"}]}"
+                    }
+                ],
+                "id": "File"
+            },
+            {
+                "name": "JMS",
+                "plugin": {
+                    "name": "JMS",
+                    "type": "batchsink",
+                    "label": "JMS",
+                    "artifact": {
+                        "name": "jms-plugins",
+                        "version": "1.0.0-SNAPSHOT",
+                        "scope": "USER"
+                    },
+                    "properties": {
+                        "referenceName": "JMS",
+                        "type": "Topic",
+                        "messageType": "Map",
+                        "jmsUsername": "${JMS_USERNAME}",
+                        "jmsPassword": "${JMS_PASSWORD}",
+                        "providerUrl": "${PROVIDER_URL}",
+                        "destination": "${DESTINATION}",
+                        "jndiContextFactory": "${JNDI_CONTEXT_FACTORY}",
+                        "jndiUsername": "${JNDI_USERNAME}",
+                        "jndiPassword": "${JNDI_PASSWORD}"
+                    }
+                },
+                "outputSchema": [
+                    {
+                        "name": "etlSchemaBody",
+                        "schema": ""
+                    }
+                ],
+                "inputSchema": [
+                    {
+                        "name": "File",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"surname\",\"type\":\"string\"},{\"name\":\"age\",\"type\":\"int\"}]}"
+                    }
+                ],
+                "id": "JMS"
+            }
+        ],
+        "schedule": "0 * * * *",
+        "engine": "spark",
+        "numOfRecordsPreview": 100,
+        "description": "Data Pipeline Application",
+        "maxConcurrentRuns": 1
+    }
+}
+
