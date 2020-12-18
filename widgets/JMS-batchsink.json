@@ -1,0 +1,75 @@
+{
+  "metadata": {
+    "spec-version": "1.5"
+  },
+  "display-name": "JMS",
+  "configuration-groups": [
+    {
+      "label": "Basic",
+      "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "Connection Factory",
+          "name": "ConnectionFactory"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "JMS Username",
+          "name": "JMSUsername"
+        },
+        {
+          "widget-type": "password",
+          "label": "JMS Password",
+          "name": "JMSPassword"
+        },
+        {
+          "widget-type": "text",
+          "label": "Provider URL",
+          "name": "ProviderURL"
+        },
+        {
+          "widget-type": "select",
+          "label": "Type",
+          "name": "Type",
+          "widget-attributes": {
+            "values": [
+              "Queue",
+              "Topic"
+            ],
+            "default": "Queue"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "JNDI Context Factory",
+          "name": "JNDIContextFactory"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "JNDI Username",
+          "name": "JNDIUsername"
+        },
+        {
+          "widget-type": "password",
+          "label": "JNDI Password",
+          "name": "JNDIPassword"
+        },
+        {
+          "widget-type": "select",
+          "label": "Message Type",
+          "name": "MessageType",
+          "widget-attributes": {
+            "values": [
+              "Message",
+              "Text",
+              "Bytes",
+              "Object",
+              "Map"
+            ],
+            "default": "Text"
+          }
+        }
+      ]
+    }
+  ]
+}
