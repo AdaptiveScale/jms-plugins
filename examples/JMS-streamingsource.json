@@ -1,0 +1,99 @@
+{
+    "artifact": {
+        "name": "cdap-data-streams",
+        "version": "6.3.0-SNAPSHOT",
+        "scope": "SYSTEM"
+    },
+    "description": "Consume messages from a given topic and write them to a file.",
+    "name": "JMS-streamingsource",
+    "config": {
+        "resources": {
+            "memoryMB": 2048,
+            "virtualCores": 1
+        },
+        "driverResources": {
+            "memoryMB": 2048,
+            "virtualCores": 1
+        },
+        "connections": [
+            {
+                "from": "JMS",
+                "to": "File"
+            }
+        ],
+        "comments": [],
+        "postActions": [],
+        "properties": {
+            "system.spark.spark.streaming.backpressure.enabled": "true",
+            "system.spark.spark.executor.instances": "1"
+        },
+        "processTimingEnabled": true,
+        "stageLoggingEnabled": false,
+        "stages": [
+            {
+                "name": "JMS",
+                "plugin": {
+                    "name": "JMS",
+                    "type": "streamingsource",
+                    "label": "JMS",
+                    "artifact": {
+                        "name": "jms-plugins",
+                        "version": "1.0.0-SNAPSHOT",
+                        "scope": "USER"
+                    },
+                    "properties": {
+                        "referenceName": "JMS",
+                        "schema": "{\"type\":\"record\",\"name\":\"message\",\"fields\":[{\"name\":\"messageId\",\"type\":\"string\"},{\"name\":\"messageTimestamp\",\"type\":\"long\"},{\"name\":\"correlationId\",\"type\":\"string\"},{\"name\":\"replyTo\",\"type\":\"string\"},{\"name\":\"destination\",\"type\":\"string\"},{\"name\":\"deliveryNode\",\"type\":\"int\"},{\"name\":\"redelivered\",\"type\":\"boolean\"},{\"name\":\"type\",\"type\":\"string\"},{\"name\":\"expiration\",\"type\":\"long\"},{\"name\":\"priority\",\"type\":\"int\"},{\"name\":\"payload\",\"type\":\"string\"}]}",
+                        "type": "Topic",
+                        "messageType": "Text",
+                        "jmsUsername": "${JMS_USERNAME}",
+                        "jmsPassword": "${JMS_PASSWORD}",
+                        "providerUrl": "${PROVIDER_URL}",
+                        "destination": "${DESTINATION}",
+                        "jndiContextFactory": "${JNDI_CONTEXT_FACTORY}"
+                    }
+                },
+                "outputSchema": "{\"type\":\"record\",\"name\":\"message\",\"fields\":[{\"name\":\"messageId\",\"type\":\"string\"},{\"name\":\"messageTimestamp\",\"type\":\"long\"},{\"name\":\"correlationId\",\"type\":\"string\"},{\"name\":\"replyTo\",\"type\":\"string\"},{\"name\":\"destination\",\"type\":\"string\"},{\"name\":\"deliveryNode\",\"type\":\"int\"},{\"name\":\"redelivered\",\"type\":\"boolean\"},{\"name\":\"type\",\"type\":\"string\"},{\"name\":\"expiration\",\"type\":\"long\"},{\"name\":\"priority\",\"type\":\"int\"},{\"name\":\"payload\",\"type\":\"string\"}]}",
+                "id": "JMS"
+            },
+            {
+                "name": "File",
+                "plugin": {
+                    "name": "File",
+                    "type": "batchsink",
+                    "label": "File",
+                    "artifact": {
+                        "name": "core-plugins",
+                        "version": "2.5.0-SNAPSHOT",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "suffix": "yyyy-MM-dd-HH-mm",
+                        "format": "delimited",
+                        "referenceName": "file",
+                        "path": "${PATH}",
+                        "delimiter": ";",
+                        "schema": "{\"name\":\"etlSchemaBody\",\"type\":\"record\",\"fields\":[{\"name\":\"body\",\"type\":\"string\"}]}"
+                    }
+                },
+                "outputSchema": "{\"name\":\"etlSchemaBody\",\"type\":\"record\",\"fields\":[{\"name\":\"body\",\"type\":\"string\"}]}",
+                "inputSchema": [
+                    {
+                        "name": "JMS",
+                        "schema": "{\"type\":\"record\",\"name\":\"message\",\"fields\":[{\"name\":\"messageId\",\"type\":\"string\"},{\"name\":\"messageTimestamp\",\"type\":\"long\"},{\"name\":\"correlationId\",\"type\":\"string\"},{\"name\":\"replyTo\",\"type\":\"string\"},{\"name\":\"destination\",\"type\":\"string\"},{\"name\":\"deliveryNode\",\"type\":\"int\"},{\"name\":\"redelivered\",\"type\":\"boolean\"},{\"name\":\"type\",\"type\":\"string\"},{\"name\":\"expiration\",\"type\":\"long\"},{\"name\":\"priority\",\"type\":\"int\"},{\"name\":\"payload\",\"type\":\"string\"}]}"
+                    }
+                ],
+                "id": "File"
+            }
+        ],
+        "batchInterval": "10s",
+        "clientResources": {
+            "memoryMB": 2048,
+            "virtualCores": 1
+        },
+        "disableCheckpoints": true,
+        "stopGracefully": true,
+        "description": "Data Streams Application"
+    }
+}
+

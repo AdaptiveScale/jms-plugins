@@ -1,0 +1,137 @@
+{
+  "metadata": {
+    "spec-version": "1.5"
+  },
+  "display-name": "JMS",
+  "configuration-groups": [
+    {
+      "label": "Basic",
+      "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "Connection Factory",
+          "name": "connectionFactory"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "JMS Username",
+          "name": "jmsUsername"
+        },
+        {
+          "widget-type": "password",
+          "label": "JMS Password",
+          "name": "jmsPassword"
+        },
+        {
+          "widget-type": "text",
+          "label": "Provider URL",
+          "name": "providerUrl"
+        },
+        {
+          "widget-type": "select",
+          "label": "Type",
+          "name": "type",
+          "widget-attributes": {
+            "values": [
+              "Queue",
+              "Topic"
+            ],
+            "default": "Queue"
+          }
+        },
+        {
+        "widget-type": "textbox",
+        "label": "Queue/Topic name",
+        "name": "name"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "JNDI Context Factory",
+          "name": "jndiContextFactory"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "JNDI Username",
+          "name": "jndiUsername"
+        },
+        {
+          "widget-type": "password",
+          "label": "JNDI Password",
+          "name": "jndiPassword"
+        },
+        {
+          "widget-type": "select",
+          "label": "Message Type",
+          "name": "messageType",
+          "widget-attributes": {
+            "values": [
+              "Message",
+              "Text",
+              "Bytes",
+              "Map"
+            ],
+            "default": "Text"
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "schema",
+      "widget-type": "schema",
+      "widget-attributes": {
+        "default-schema": {
+          "name": "etlSchemaBody",
+          "type": "record",
+          "fields": [
+            {
+              "name": "messageId",
+              "type": "string"
+            },
+            {
+              "name": "messageTimestamp",
+              "type": "long"
+            },
+            {
+              "name": "correlationId",
+              "type": "string"
+            },
+            {
+              "name": "replyTo",
+              "type": "string"
+            },
+            {
+              "name": "destination",
+              "type": "string"
+            },
+            {
+              "name": "deliveryNode",
+              "type": "int"
+            },
+            {
+              "name": "redelivered",
+              "type": "boolean"
+            },
+            {
+              "name": "type",
+              "type": "boolean"
+            },
+            {
+              "name": "expiration",
+              "type": "long"
+            },
+            {
+              "name": "priority",
+              "type": "int"
+            },
+            {
+              "name": "payload",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
