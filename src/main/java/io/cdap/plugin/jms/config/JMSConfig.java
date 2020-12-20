@@ -1,5 +1,6 @@
 package io.cdap.plugin.jms.config;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Macro;
@@ -8,10 +9,13 @@ import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.plugin.common.ReferencePluginConfig;
 
 import java.io.Serializable;
+import javax.annotation.Nullable;
 
 public class JMSConfig extends ReferencePluginConfig implements Serializable {
+
   @Name("ConnectionFactory")
   @Description("Name of the connection factory")
+  @Nullable
   @Macro
   private String connectionFactory;
 
@@ -37,16 +41,19 @@ public class JMSConfig extends ReferencePluginConfig implements Serializable {
 
   @Name("JNDIContextFactory")
   @Description("Name of the contact factory")
+  @Nullable
   @Macro
   private String jndiContextFactory;
 
   @Name("JNDIUsername")
   @Description("User name for JNDI")
+  @Nullable
   @Macro
   private String jndiUsername;
 
   @Name("JNDIPassword")
   @Description("password for JNDI")
+  @Nullable
   @Macro
   private String jndiPassword;
 
@@ -55,6 +62,18 @@ public class JMSConfig extends ReferencePluginConfig implements Serializable {
   @Macro
   private String messageType;
 
+//  @Description("Output schema of the JMS source")
+//  private String schema;
+
+  public JMSConfig()
+  {
+    super("");
+    this.connectionFactory = "ConnectionFactory";
+    this.type = "Queue";
+    this.messageType = "Text";
+  }
+
+  @VisibleForTesting
   public JMSConfig(String referenceName, String connectionFactory, String jmsUsername, String jmsPassword,
                             String providerUrl, String type, String jndiContextFactory, String jndiUsername,
                             String jndiPassword, String messageType) {
@@ -106,7 +125,7 @@ public class JMSConfig extends ReferencePluginConfig implements Serializable {
     return messageType;
   }
 
-  private void validate(FailureCollector failureCollector) {
+  public void validate(FailureCollector failureCollector) {
 
     if (Strings.isNullOrEmpty(this.jmsUsername)) {
       failureCollector.addFailure("JMS username must be provided", null);
