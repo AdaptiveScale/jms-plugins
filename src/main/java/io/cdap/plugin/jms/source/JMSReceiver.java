@@ -39,15 +39,12 @@ public class JMSReceiver extends Receiver<StructuredRecord> implements MessageLi
       Properties properties = new Properties();
       properties.put(Context.INITIAL_CONTEXT_FACTORY, config.getJndiContextFactory());
       properties.put(Context.PROVIDER_URL, config.getProviderUrl());
-      logger.info("PARA KONTEKSTIT");
       Context context = new InitialContext(properties);
-      logger.info("PAS KONTEKSTIT");
       logger.info(config.getJndiContextFactory());
       logger.info(config.getProviderUrl());
-
       ConnectionFactory factory = (ConnectionFactory) context.lookup(config.getConnectionFactory());
       connection = factory.createConnection(config.getJmsUsername(), config.getJmsPassword());
-      logger.info("LUJTA BABOO");
+
       Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
 
       Destination queue = (Destination) context.lookup("MyQueue");

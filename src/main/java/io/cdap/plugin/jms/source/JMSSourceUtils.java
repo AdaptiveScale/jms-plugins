@@ -126,6 +126,7 @@ public class JMSSourceUtils {
       @Override
       public void onStart() {
         try {
+
           Properties properties = new Properties();
           properties.put(Context.INITIAL_CONTEXT_FACTORY, config.getJndiContextFactory().trim());
           properties.put(Context.PROVIDER_URL, config.getProviderUrl().trim());
