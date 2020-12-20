@@ -16,16 +16,83 @@ package io.cdap.plugin.jms.source;
  * the License.
  */
 
-
 import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.streaming.StreamingContext;
 import io.cdap.plugin.jms.config.JMSConfig;
+import joptsimple.internal.Strings;
+import org.apache.spark.storage.StorageLevel;
 import org.apache.spark.streaming.api.java.JavaDStream;
+import org.apache.spark.streaming.receiver.Receiver;
+
+import javax.jms.BytesMessage;
+import javax.jms.JMSException;
+import javax.jms.MapMessage;
+import javax.jms.Message;
+import javax.jms.ObjectMessage;
+import javax.jms.TextMessage;
 
 public class JMSSourceUtils {
+
+  private static final String MESSAGE_ID = "messageId";                 // string
+  private static final String MESSAGE_TIMESTAMP = "messageTimestamp";   // long
+  private static final String CORRELATION_ID = "correlationId";         // string
+  private static final String REPLY_TO = "replyTo";                     // type: Destination
+  private static final String DESTINATION = "destination";              // type: Destination
+  private static final String DELIVERY_MODE = "deliveryNode";           // int
+  private static final String REDELIVERED = "redelivered";              // boolean
+  private static final String TYPE = "type";                            // string
+  private static final String EXPIRATION = "expiration";                // long
+  private static final String PRIORITY = "priority";                    // int
+
+  private static final Schema INITIAL_SCHEMA = Schema.recordOf("message",
+                                                               Schema.Field.of(MESSAGE_ID, Schema.of(Schema.Type.STRING)),
+                                                               Schema.Field.of(MESSAGE_TIMESTAMP, Schema.of(Schema.Type.LONG)),
+                                                               Schema.Field.of(CORRELATION_ID, Schema.of(Schema.Type.STRING)),
+                                                               Schema.Field.of(REPLY_TO, Schema.of(Schema.Type.STRING)),
+                                                               Schema.Field.of(DESTINATION, Schema.of(Schema.Type.STRING)),
+                                                               Schema.Field.of(DELIVERY_MODE, Schema.of(Schema.Type.INT)),
+                                                               Schema.Field.of(REDELIVERED, Schema.of(Schema.Type.BOOLEAN)),
+                                                               Schema.Field.of(TYPE, Schema.of(Schema.Type.STRING)),
+                                                               Schema.Field.of(EXPIRATION, Schema.of(Schema.Type.LONG)),
+                                                               Schema.Field.of(PRIORITY, Schema.of(Schema.Type.INT)),
+                                                               Schema.Field.of("payload", Schema.of(Schema.Type.STRING)));
+
+
   static JavaDStream<StructuredRecord> getJavaDStream(StreamingContext context,
                                                       JMSConfig config) {
-    // todo: implement custom receiver
-    return null;
+    Receiver<StructuredRecord> JMSReceiver = new JMSReceiver(StorageLevel.MEMORY_ONLY(), config);
+    return context.getSparkStreamingContext().receiverStream(JMSReceiver);
+  }
+
+  public static Schema getInitialSchema() {
+    return INITIAL_SCHEMA;
+  }
+
+  public static StructuredRecord convertMessage(Message message) throws JMSException {
+    StructuredRecord.Builder recordBuilder = StructuredRecord.builder(INITIAL_SCHEMA);
+
+    if (message instanceof TextMessage) {
+      recordBuilder.set(MESSAGE_ID, Strings.isNullOrEmpty(message.getJMSMessageID()) ? "null" : message.getJMSMessageID());
+      recordBuilder.set(MESSAGE_TIMESTAMP, message.getJMSTimestamp());
+      recordBuilder.set(CORRELATION_ID, message.getJMSCorrelationID());
+      recordBuilder.set(REPLY_TO, message.getJMSReplyTo().toString());
+      recordBuilder.set(DESTINATION, message.getJMSDestination().toString());
+      recordBuilder.set(DELIVERY_MODE, message.getJMSDeliveryMode());
+      recordBuilder.set(REDELIVERED, message.getJMSRedelivered());
+      recordBuilder.set(TYPE, message.getJMSType());
+      recordBuilder.set(EXPIRATION, message.getJMSExpiration());
+      recordBuilder.set(PRIORITY, message.getJMSPriority());
+      recordBuilder.set("payload", ((TextMessage) message).getText());
+
+    } else if (message instanceof BytesMessage) {
+
+    } else if (message instanceof ObjectMessage) {
+
+    } else if (message instanceof MapMessage) {
+
+    }
+
+    return recordBuilder.build();
   }
 }

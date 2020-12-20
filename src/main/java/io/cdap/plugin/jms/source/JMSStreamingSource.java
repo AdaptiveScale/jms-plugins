@@ -20,12 +20,17 @@ import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.streaming.StreamingContext;
 import io.cdap.cdap.etl.api.streaming.StreamingSource;
 import io.cdap.cdap.etl.api.streaming.StreamingSourceContext;
+import io.cdap.plugin.common.LineageRecorder;
 import io.cdap.plugin.jms.config.JMSConfig;
 import org.apache.spark.streaming.api.java.JavaDStream;
+
+import java.util.stream.Collectors;
 
 @Plugin(type = StreamingSource.PLUGIN_TYPE)
 @Name("JMS")
@@ -41,14 +46,28 @@ public class JMSStreamingSource extends ReferenceStreamingSource<StructuredRecor
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     super.configurePipeline(pipelineConfigurer);
+    pipelineConfigurer.getStageConfigurer().setOutputSchema(JMSSourceUtils.getInitialSchema());
   }
 
   @Override
   public void prepareRun(StreamingSourceContext context) throws Exception {
+    Schema schema = JMSSourceUtils.getInitialSchema();
+    // record dataset lineage
+    context.registerLineage(config.referenceName, schema);
+
+    if (schema.getFields() != null) {
+      LineageRecorder recorder = new LineageRecorder(context, config.referenceName);
+      recorder.recordRead("Read", "Read from jms",
+                          schema.getFields().stream().map(Schema.Field::getName).collect(Collectors.toList()));
+    }
   }
 
   @Override
   public JavaDStream<StructuredRecord> getStream(StreamingContext context) throws Exception {
-    return null;
+    FailureCollector collector = context.getFailureCollector();
+    config.validate(collector);
+    collector.getOrThrowException();
+
+    return JMSSourceUtils.getJavaDStream(context, config);
   }
 }
