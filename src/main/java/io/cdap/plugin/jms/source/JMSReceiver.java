@@ -7,7 +7,6 @@ import org.apache.spark.streaming.receiver.Receiver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Properties;
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
 import javax.jms.Destination;
@@ -16,15 +15,14 @@ import javax.jms.Message;
 import javax.jms.MessageConsumer;
 import javax.jms.MessageListener;
 import javax.jms.Session;
-import javax.naming.Context;
-import javax.naming.InitialContext;
 
 public class JMSReceiver extends Receiver<StructuredRecord> implements MessageListener {
 
+  private static Logger logger = LoggerFactory.getLogger(JMSReceiver.class);
   private JMSConfig config;
   private Connection connection;
   private StorageLevel storageLevel;
-  private static Logger logger = LoggerFactory.getLogger(JMSReceiver.class);
+  private static final Logger LOG = LoggerFactory.getLogger(JMSReceiver.class);
 
 
   public JMSReceiver(StorageLevel storageLevel, JMSConfig config) {
@@ -34,45 +32,56 @@ public class JMSReceiver extends Receiver<StructuredRecord> implements MessageLi
   }
 
   public void onStart() {
+    JNDIProvider jndiProvider = new JNDIProvider(this.config);
+    ConnectionFactory factory = jndiProvider.getConnectionFactory();
 
     try {
-      Properties properties = new Properties();
-      properties.put(Context.INITIAL_CONTEXT_FACTORY, config.getJndiContextFactory());
-      properties.put(Context.PROVIDER_URL, config.getProviderUrl());
-      Context context = new InitialContext(properties);
-      logger.info(config.getJndiContextFactory());
-      logger.info(config.getProviderUrl());
-      ConnectionFactory factory = (ConnectionFactory) context.lookup(config.getConnectionFactory());
       connection = factory.createConnection(config.getJmsUsername(), config.getJmsPassword());
-
-      Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-
-      Destination queue = (Destination) context.lookup("MyQueue");
-
-      MessageConsumer messageConsumer = session.createConsumer(queue);
-
-      messageConsumer.setMessageListener(this);
-      connection.start();
+    } catch (JMSException e) {
+      LOG.error("Connection couldn't be created.", e);
+      throw new RuntimeException(e);
     }
-    catch (Exception ex) {
-      System.out.println("drd");
+
+    Session session = null;
+    try {
+      session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+    } catch (JMSException e) {
+      LOG.error("Session couldn't be created.", e);
+      throw new RuntimeException(e);
+    }
+
+    Destination destination = jndiProvider.getDestination();
+    MessageConsumer messageConsumer = null;
+    try {
+      messageConsumer = session.createConsumer(destination);
+    } catch (JMSException e) {
+      LOG.error("Consumer couldn't be created.", e);
+      throw new RuntimeException(e);
+    }
+
+    try {
+      connection.start();
+    } catch (JMSException e) {
+      LOG.error("Connection couldn't be started.", e);
+      throw new RuntimeException(e);
     }
   }
 
   public void onStop() {
     try {
       connection.stop();
-    }
-    catch (JMSException exception) {
-      System.out.println(exception);
+    } catch (JMSException e) {
+      LOG.error("Connection couldn't be stopped.", e);
+      throw new RuntimeException(e);
     }
   }
 
   public void onMessage(Message message) {
     try {
-      store( JMSSourceUtils.convertMessage(message));
+      store(JMSSourceUtils.convertMessage(message, this.config));
     } catch (Exception e) {
-      e.printStackTrace();
+      LOG.error("Message couldn't be stored in spark memory.", e);
+      throw new RuntimeException(e);
     }
   }
 }

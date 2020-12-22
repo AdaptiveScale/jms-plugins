@@ -5,14 +5,17 @@ import com.google.common.base.Strings;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.plugin.common.ReferencePluginConfig;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import javax.annotation.Nullable;
 
 public class JMSConfig extends ReferencePluginConfig implements Serializable {
-
   @Name("ConnectionFactory")
   @Description("Name of the connection factory")
   @Nullable
@@ -62,8 +65,21 @@ public class JMSConfig extends ReferencePluginConfig implements Serializable {
   @Macro
   private String messageType;
 
-//  @Description("Output schema of the JMS source")
-//  private String schema;
+  @Name("schema")
+  @Nullable
+  @Description("Specifies the schema of the records outputted from this plugin.")
+  private String schema;
+
+  public static final String MESSAGE_ID = "messageId";
+  public static final String MESSAGE_TIMESTAMP = "messageTimestamp";
+  public static final String CORRELATION_ID = "correlationId";
+  public static final String REPLY_TO = "replyTo";
+  public static final String DESTINATION = "destination";
+  public static final String DELIVERY_MODE = "deliveryNode";
+  public static final String REDELIVERED = "redelivered";
+  public static final String TYPE = "type";
+  public static final String EXPIRATION = "expiration";
+  public static final String PRIORITY = "priority";
 
   public JMSConfig()
   {
@@ -75,8 +91,8 @@ public class JMSConfig extends ReferencePluginConfig implements Serializable {
 
   @VisibleForTesting
   public JMSConfig(String referenceName, String connectionFactory, String jmsUsername, String jmsPassword,
-                            String providerUrl, String type, String jndiContextFactory, String jndiUsername,
-                            String jndiPassword, String messageType) {
+                   String providerUrl, String type, String jndiContextFactory, String jndiUsername,
+                   String jndiPassword, String messageType) {
     super(referenceName);
     this.connectionFactory = Strings.isNullOrEmpty(connectionFactory) ? "ConnectionFactory" : connectionFactory;
     this.jmsUsername = jmsUsername;
@@ -128,15 +144,18 @@ public class JMSConfig extends ReferencePluginConfig implements Serializable {
   public void validate(FailureCollector failureCollector) {
 
     if (Strings.isNullOrEmpty(this.jmsUsername)) {
-      failureCollector.addFailure("JMS username must be provided", null);
+      failureCollector.addFailure("JMS username must be provided", null)
+        .withConfigProperty(jmsUsername);
     }
 
     if (Strings.isNullOrEmpty(this.jmsPassword)) {
-      failureCollector.addFailure("JMS password must be provided", null);
+      failureCollector.addFailure("JMS password must be provided", null)
+        .withConfigProperty(jmsPassword);
     }
 
     if (Strings.isNullOrEmpty(this.providerUrl)) {
-      failureCollector.addFailure("Provider URL must be provided", null);
+      failureCollector.addFailure("Provider URL must be provided", null)
+        .withConfigProperty(jmsPassword);
     }
 
     if (Strings.isNullOrEmpty(this.type)) {
@@ -145,6 +164,41 @@ public class JMSConfig extends ReferencePluginConfig implements Serializable {
 
     if (Strings.isNullOrEmpty(this.type)) {
       failureCollector.addFailure("Message type must be provided", null);
+    }
+  }
+
+  public Schema getSpecificSchema(String type) {
+    List<Schema.Field> baseSchemaFields = new ArrayList<Schema.Field>(
+      Arrays.asList(
+        Schema.Field.of(MESSAGE_ID, Schema.of(Schema.Type.STRING)),
+        Schema.Field.of(MESSAGE_TIMESTAMP, Schema.of(Schema.Type.LONG)),
+        Schema.Field.of(CORRELATION_ID, Schema.of(Schema.Type.STRING)),
+        Schema.Field.of(REPLY_TO, Schema.of(Schema.Type.STRING)),
+        Schema.Field.of(DESTINATION, Schema.of(Schema.Type.STRING)),
+        Schema.Field.of(DELIVERY_MODE, Schema.of(Schema.Type.INT)),
+        Schema.Field.of(REDELIVERED, Schema.of(Schema.Type.BOOLEAN)),
+        Schema.Field.of(TYPE, Schema.of(Schema.Type.STRING)),
+        Schema.Field.of(EXPIRATION, Schema.of(Schema.Type.LONG)),
+        Schema.Field.of(PRIORITY, Schema.of(Schema.Type.INT))
+      ));
+
+    switch (type) {
+      case "Message":
+        return Schema.recordOf("message", baseSchemaFields);
+      case "Bytes":
+        baseSchemaFields.add(Schema.Field.of("payload", Schema.of(Schema.Type.BYTES)));
+        return Schema.recordOf("message", baseSchemaFields);
+      case "Map":
+        baseSchemaFields.add(Schema.Field.of("payload", Schema.mapOf(Schema.of(Schema.Type.STRING),
+                                                                     Schema.of(Schema.Type.STRING))));
+        return Schema.recordOf("message", baseSchemaFields);
+      case "Object":
+        baseSchemaFields.add(Schema.Field.of("payload", Schema.of(Schema.Type.STRING)));
+        return Schema.recordOf("message", baseSchemaFields);
+
+      default: // Text
+        baseSchemaFields.add(Schema.Field.of("payload", Schema.of(Schema.Type.STRING)));
+        return Schema.recordOf("message", baseSchemaFields);
     }
   }
 }

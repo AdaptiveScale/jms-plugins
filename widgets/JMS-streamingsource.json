@@ -82,13 +82,51 @@
           "type": "record",
           "fields": [
             {
-              "name": "body",
+              "name": "messageId",
+              "type": "string"
+            },
+            {
+              "name": "messageTimestamp",
+              "type": "long"
+            },
+            {
+              "name": "correlationId",
+              "type": "string"
+            },
+            {
+              "name": "replyTo",
+              "type": "string"
+            },
+            {
+              "name": "destination",
+              "type": "string"
+            },
+            {
+              "name": "deliveryNode",
+              "type": "int"
+            },
+            {
+              "name": "redelivered",
+              "type": "boolean"
+            },
+            {
+              "name": "type",
+              "type": "boolean"
+            },
+            {
+              "name": "expiration",
+              "type": "long"
+            },
+            {
+              "name": "priority",
+              "type": "int"
+            },
+            {
+              "name": "payload",
               "type": "string"
             }
           ]
-        },
-        "schema-default-type": "string",
-        "property-watch": "format"
+        }
       }
     }
   ]

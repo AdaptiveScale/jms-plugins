@@ -306,7 +306,12 @@
         <version>3.3.0</version>
         <configuration>
           <instructions>
-            <_exportcontents>io.cdap.plugin.*;com.google.common.base.*;org.apache.activemq.*;
+            <_exportcontents>
+              io.cdap.plugin.*;
+              com.google.common.base.*;
+              org.apache.activemq.*;
+              io.cdap.plugin.spark.*;
+              org.apache.spark.streaming.*;
             </_exportcontents>
             <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
             <Embed-Transitive>true</Embed-Transitive>
