@@ -300,15 +300,18 @@
           <reuseForks>false</reuseForks>
         </configuration>
       </plugin>
-
       <plugin>
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>
         <version>3.3.0</version>
         <configuration>
           <instructions>
-            <_exportcontents>io.cdap.plugin.*;org.apache.spark.streaming.kafka.*;
-              kafka.serializer.*;kafka.common;com.google.common.base.*;
+            <_exportcontents>
+              io.cdap.plugin.*;
+              com.google.common.base.*;
+              org.apache.activemq.*;
+              io.cdap.plugin.spark.*;
+              org.apache.spark.streaming.*;
             </_exportcontents>
             <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
             <Embed-Transitive>true</Embed-Transitive>

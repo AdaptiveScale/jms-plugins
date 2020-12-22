@@ -29,6 +29,8 @@ import io.cdap.cdap.etl.api.streaming.StreamingSourceContext;
 import io.cdap.plugin.common.LineageRecorder;
 import io.cdap.plugin.jms.config.JMSConfig;
 import org.apache.spark.streaming.api.java.JavaDStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.stream.Collectors;
 
@@ -36,6 +38,8 @@ import java.util.stream.Collectors;
 @Name("JMS")
 @Description("JMS (Java Messaging Service) Source")
 public class JMSStreamingSource extends ReferenceStreamingSource<StructuredRecord> {
+  private static Logger logger = LoggerFactory.getLogger(JMSStreamingSource.class);
+
   private final JMSConfig config;
 
   public JMSStreamingSource(JMSConfig config) {
@@ -46,12 +50,12 @@ public class JMSStreamingSource extends ReferenceStreamingSource<StructuredRecor
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     super.configurePipeline(pipelineConfigurer);
-    pipelineConfigurer.getStageConfigurer().setOutputSchema(JMSSourceUtils.getInitialSchema());
+    pipelineConfigurer.getStageConfigurer().setOutputSchema(config.getSpecificSchema(config.getMessageType()));
   }
 
   @Override
   public void prepareRun(StreamingSourceContext context) throws Exception {
-    Schema schema = JMSSourceUtils.getInitialSchema();
+    Schema schema = config.getSpecificSchema("Text");
     // record dataset lineage
     context.registerLineage(config.referenceName, schema);
 
