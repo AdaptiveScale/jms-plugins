@@ -30,6 +30,7 @@ import javax.jms.BytesMessage;
 import javax.jms.JMSException;
 import javax.jms.MapMessage;
 import javax.jms.Message;
+import javax.jms.ObjectMessage;
 import javax.jms.TextMessage;
 
 public class JMSSourceUtils {
@@ -42,53 +43,56 @@ public class JMSSourceUtils {
 
   public static StructuredRecord convertMessage(Message message, JMSConfig config) throws JMSException {
     if (message instanceof TextMessage) {
-      StructuredRecord.Builder recordBuilder = StructuredRecord.builder(config.getSpecificSchema(config.getMessageType()));
-      addHeaderData(recordBuilder, message, config);
-      recordBuilder.set("payload", ((TextMessage) message).getText());
-      return recordBuilder.build();
+      return convertTextMessage(message, config);
     } else if (message instanceof BytesMessage) {
-      StructuredRecord.Builder recordBuilder = StructuredRecord.builder(config.getSpecificSchema(config.getMessageType()));
-      addHeaderData(recordBuilder, message, config);
-      int byteLength = (int) ((BytesMessage) message).getBodyLength();
-      byte[] bytes = new byte[byteLength];
-      for (int i = 0; i < byteLength; i++) {
-        bytes[i] = ((BytesMessage) message).readByte();
-      }
-      recordBuilder.set("payload", bytes);
-      return recordBuilder.build();
+      return convertByteMessage(message, config);
     } else if (message instanceof MapMessage) {
-      StructuredRecord.Builder recordBuilder = StructuredRecord.builder(config.getSpecificSchema(config.getMessageType()));
-      addHeaderData(recordBuilder, message, config);
-      HashMap<String, String> m = new HashMap<>();
-      Enumeration<?> it = ((MapMessage) message).getMapNames();
-      while(it.hasMoreElements()) {
-       String name = (String) it.nextElement();
-       m.put(name, ((MapMessage) message).getString(name));
-      }
-      recordBuilder.set("payload", m);
-      return recordBuilder.build();
+      return convertMapMessage(message, config);
+    } else if (message instanceof ObjectMessage) {
+      return null;
     } else if (message instanceof Message) {
-      StructuredRecord.Builder recordBuilder = StructuredRecord.builder(config.getSpecificSchema(config.getMessageType()));
-      addHeaderData(recordBuilder, message, config);
-      recordBuilder.build();
+      return convertPureMessage(message, config);
     }
-
-//    else if (message instanceof ObjectMessage) {
-//      StructuredRecord.Builder recordBuilder = StructuredRecord.builder(config.getSpecificSchema("Object"));
-////      addHeaderData(recordBuilder, message, config);
-//      Object objectMessage = ((ObjectMessage) mesvn sage).getObject();
-//      Gson gson = new Gson();
-//      String jsonObjectMessage = gson.toJson(objectMessage);
-//      try {
-//        Schema schema = Schema.parseJson(jsonObjectMessage);
-//      } catch (IOException e) {
-//        e.printStackTrace();
-//      }
-//
-//      return recordBuilder.build();
-//    }
-
     return null;
+  }
+
+  private static StructuredRecord convertTextMessage(Message message, JMSConfig config) throws JMSException {
+    StructuredRecord.Builder recordBuilder = StructuredRecord.builder(config.getSpecificSchema(config.getMessageType()));
+    addHeaderData(recordBuilder, message, config);
+    recordBuilder.set("payload", ((TextMessage) message).getText());
+    return recordBuilder.build();
+  }
+
+  private static StructuredRecord convertByteMessage(Message message, JMSConfig config) throws JMSException {
+    StructuredRecord.Builder recordBuilder = StructuredRecord.builder(config.getSpecificSchema(config.getMessageType()));
+    addHeaderData(recordBuilder, message, config);
+    int byteLength = (int) ((BytesMessage) message).getBodyLength();
+    byte[] bytes = new byte[byteLength];
+    for (int i = 0; i < byteLength; i++) {
+      bytes[i] = ((BytesMessage) message).readByte();
+    }
+    recordBuilder.set("payload", bytes);
+    return recordBuilder.build();
+  }
+
+  private static StructuredRecord convertMapMessage(Message message, JMSConfig config) throws JMSException {
+    StructuredRecord.Builder recordBuilder = StructuredRecord.builder(config.getSpecificSchema(config.getMessageType()));
+    addHeaderData(recordBuilder, message, config);
+    HashMap<String, String> m = new HashMap<>();
+    Enumeration<?> it = ((MapMessage) message).getMapNames();
+    while (it.hasMoreElements()) {
+      String name = (String) it.nextElement();
+      m.put(name, ((MapMessage) message).getString(name));
+    }
+    recordBuilder.set("payload", m);
+    return recordBuilder.build();
+  }
+
+  private static StructuredRecord convertPureMessage(Message message, JMSConfig config) throws JMSException {
+    StructuredRecord.Builder recordBuilder = StructuredRecord.builder(config.getSpecificSchema(config.getMessageType()));
+    addHeaderData(recordBuilder, message, config);
+    // todo: we need to handle this like we did with the map
+    return recordBuilder.build();
   }
 
   private static StructuredRecord.Builder addHeaderData(StructuredRecord.Builder recordBuilder, Message message,
