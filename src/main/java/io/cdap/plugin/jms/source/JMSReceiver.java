@@ -15,7 +15,9 @@ import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageConsumer;
 import javax.jms.MessageListener;
+import javax.jms.Queue;
 import javax.jms.Session;
+import javax.jms.Topic;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -116,11 +118,20 @@ public class JMSReceiver extends Receiver<StructuredRecord> implements MessageLi
   }
 
   private Destination getDestination(Context context) {
-    try {
-      return (Destination) context.lookup("MyTopic");
-    } catch (NamingException e) {
-      logger.error("Exception when trying to do queue lookup failed.", e);
-      throw new RuntimeException(e);
+    if (config.getType().equals("Topic")) {
+      try {
+        return (Topic) context.lookup("MyTopic");
+      } catch (NamingException e) {
+        logger.error("Cannot resolve the topic with the given name.", e);
+        throw new RuntimeException(e);
+      }
+    } else {
+      try {
+        return (Queue) context.lookup("MyTopic");
+      } catch (NamingException e) {
+        logger.error("Cannot resolve the queue with the given name.", e);
+        throw new RuntimeException(e);
+      }
     }
   }
 
