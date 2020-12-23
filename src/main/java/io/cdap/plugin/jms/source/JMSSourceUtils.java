@@ -19,15 +19,17 @@ package io.cdap.plugin.jms.source;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.etl.api.streaming.StreamingContext;
 import io.cdap.plugin.jms.config.JMSConfig;
+import joptsimple.internal.Strings;
 import org.apache.spark.storage.StorageLevel;
 import org.apache.spark.streaming.api.java.JavaDStream;
 import org.apache.spark.streaming.receiver.Receiver;
 
+import java.util.Enumeration;
+import java.util.HashMap;
 import javax.jms.BytesMessage;
 import javax.jms.JMSException;
 import javax.jms.MapMessage;
 import javax.jms.Message;
-import javax.jms.ObjectMessage;
 import javax.jms.TextMessage;
 
 public class JMSSourceUtils {
@@ -39,33 +41,59 @@ public class JMSSourceUtils {
   }
 
   public static StructuredRecord convertMessage(Message message, JMSConfig config) throws JMSException {
-    StructuredRecord.Builder recordBuilder = StructuredRecord.builder(config.getSpecificSchema("Text"));
-
     if (message instanceof TextMessage) {
-
-      String messageId = message.getJMSMessageID();
-      recordBuilder.set(JMSConfig.MESSAGE_ID, messageId);
-      recordBuilder.set(JMSConfig.MESSAGE_TIMESTAMP, message.getJMSTimestamp());
-      recordBuilder.set(JMSConfig.CORRELATION_ID, message.getJMSCorrelationID());
-      recordBuilder.set(JMSConfig.REPLY_TO, message.getJMSReplyTo().toString());
-      recordBuilder.set(JMSConfig.DESTINATION, message.getJMSDestination().toString());
-      recordBuilder.set(JMSConfig.DELIVERY_MODE, message.getJMSDeliveryMode());
-      recordBuilder.set(JMSConfig.REDELIVERED, message.getJMSRedelivered());
-      recordBuilder.set(JMSConfig.TYPE, message.getJMSType());
-      recordBuilder.set(JMSConfig.EXPIRATION, message.getJMSExpiration());
-      recordBuilder.set(JMSConfig.PRIORITY, message.getJMSPriority());
+      StructuredRecord.Builder recordBuilder = StructuredRecord.builder(config.getSpecificSchema(config.getMessageType()));
+      addHeaderData(recordBuilder, message, config);
       recordBuilder.set("payload", ((TextMessage) message).getText());
-
+      return recordBuilder.build();
     } else if (message instanceof BytesMessage) {
-
-    } else if (message instanceof ObjectMessage) {
-
+      StructuredRecord.Builder recordBuilder = StructuredRecord.builder(config.getSpecificSchema(config.getMessageType()));
+      addHeaderData(recordBuilder, message, config);
+      recordBuilder.set("payload", ((BytesMessage) message).readByte()); // todo: check this out
+      return recordBuilder.build();
     } else if (message instanceof MapMessage) {
-
+      StructuredRecord.Builder recordBuilder = StructuredRecord.builder(config.getSpecificSchema(config.getMessageType()));
+      addHeaderData(recordBuilder, message, config);
+      HashMap<String, String> m = new HashMap<>();
+      Enumeration<?> it = ((MapMessage) message).getMapNames();
+      while(it.hasMoreElements()) {
+       String name = (String) it.nextElement();
+       m.put(name, ((MapMessage) message).getString(name));
+      }
+      recordBuilder.set("payload", m);
+      return recordBuilder.build();
     }
 
-    StructuredRecord record = recordBuilder.build();
-    return record;
+//    else if (message instanceof ObjectMessage) {
+//      StructuredRecord.Builder recordBuilder = StructuredRecord.builder(config.getSpecificSchema("Object"));
+////      addHeaderData(recordBuilder, message, config);
+//      Object objectMessage = ((ObjectMessage) mesvn sage).getObject();
+//      Gson gson = new Gson();
+//      String jsonObjectMessage = gson.toJson(objectMessage);
+//      try {
+//        Schema schema = Schema.parseJson(jsonObjectMessage);
+//      } catch (IOException e) {
+//        e.printStackTrace();
+//      }
+//
+//      return recordBuilder.build();
+//    }
+
+    return null;
   }
 
+  private static StructuredRecord.Builder addHeaderData(StructuredRecord.Builder recordBuilder, Message message,
+                                                        JMSConfig config) throws JMSException {
+    recordBuilder.set(JMSConfig.MESSAGE_ID, Strings.isNullOrEmpty(message.getJMSMessageID()) ? "" : message.getJMSMessageID());
+    recordBuilder.set(JMSConfig.MESSAGE_TIMESTAMP, message.getJMSTimestamp());
+    recordBuilder.set(JMSConfig.CORRELATION_ID, Strings.isNullOrEmpty(message.getJMSCorrelationID()) ? "" : message.getJMSCorrelationID());
+    recordBuilder.set(JMSConfig.REPLY_TO, Strings.isNullOrEmpty(message.getJMSReplyTo().toString()) ? "" : message.getJMSReplyTo().toString());
+    recordBuilder.set(JMSConfig.DESTINATION, Strings.isNullOrEmpty(message.getJMSDestination().toString()) ? "" : message.getJMSDestination().toString());
+    recordBuilder.set(JMSConfig.DELIVERY_MODE, message.getJMSDeliveryMode());
+    recordBuilder.set(JMSConfig.REDELIVERED, message.getJMSRedelivered());
+    recordBuilder.set(JMSConfig.TYPE, Strings.isNullOrEmpty(message.getJMSType()) ? "" : message.getJMSType());
+    recordBuilder.set(JMSConfig.EXPIRATION, message.getJMSExpiration());
+    recordBuilder.set(JMSConfig.PRIORITY, message.getJMSPriority());
+    return recordBuilder;
+  }
 }

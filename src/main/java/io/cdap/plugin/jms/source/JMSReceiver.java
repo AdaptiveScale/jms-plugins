@@ -7,6 +7,7 @@ import org.apache.spark.streaming.receiver.Receiver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Properties;
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
 import javax.jms.Destination;
@@ -18,7 +19,6 @@ import javax.jms.Session;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
-import java.util.Properties;
 
 public class JMSReceiver extends Receiver<StructuredRecord> implements MessageListener {
 
@@ -117,7 +117,7 @@ public class JMSReceiver extends Receiver<StructuredRecord> implements MessageLi
 
   private Destination getDestination(Context context) {
     try {
-      return (Destination) context.lookup("MyQueue");
+      return (Destination) context.lookup("MyTopic");
     } catch (NamingException e) {
       logger.error("Exception when trying to do queue lookup failed.", e);
       throw new RuntimeException(e);
@@ -150,5 +150,4 @@ public class JMSReceiver extends Receiver<StructuredRecord> implements MessageLi
       throw new RuntimeException(e);
     }
   }
-
 }
