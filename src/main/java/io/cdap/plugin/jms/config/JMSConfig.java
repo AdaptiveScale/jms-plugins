@@ -186,7 +186,7 @@ public class JMSConfig extends ReferencePluginConfig implements Serializable {
       case "Message":
         return Schema.recordOf("message", baseSchemaFields);
       case "Bytes":
-        baseSchemaFields.add(Schema.Field.of("payload", Schema.of(Schema.Type.BYTES)));
+        baseSchemaFields.add(Schema.Field.of("payload", Schema.arrayOf(Schema.of(Schema.Type.BYTES))));
         return Schema.recordOf("message", baseSchemaFields);
       case "Map":
         baseSchemaFields.add(Schema.Field.of("payload", Schema.mapOf(Schema.of(Schema.Type.STRING),

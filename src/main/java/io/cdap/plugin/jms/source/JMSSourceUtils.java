@@ -16,10 +16,10 @@ package io.cdap.plugin.jms.source;
  * the License.
  */
 
+import com.google.common.base.Strings;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.etl.api.streaming.StreamingContext;
 import io.cdap.plugin.jms.config.JMSConfig;
-import joptsimple.internal.Strings;
 import org.apache.spark.storage.StorageLevel;
 import org.apache.spark.streaming.api.java.JavaDStream;
 import org.apache.spark.streaming.receiver.Receiver;
@@ -49,7 +49,12 @@ public class JMSSourceUtils {
     } else if (message instanceof BytesMessage) {
       StructuredRecord.Builder recordBuilder = StructuredRecord.builder(config.getSpecificSchema(config.getMessageType()));
       addHeaderData(recordBuilder, message, config);
-      recordBuilder.set("payload", ((BytesMessage) message).readByte()); // todo: check this out
+      int byteLength = (int) ((BytesMessage) message).getBodyLength();
+      byte[] bytes = new byte[byteLength];
+      for (int i = 0; i < byteLength; i++) {
+        bytes[i] = ((BytesMessage) message).readByte();
+      }
+      recordBuilder.set("payload", bytes);
       return recordBuilder.build();
     } else if (message instanceof MapMessage) {
       StructuredRecord.Builder recordBuilder = StructuredRecord.builder(config.getSpecificSchema(config.getMessageType()));
@@ -62,6 +67,10 @@ public class JMSSourceUtils {
       }
       recordBuilder.set("payload", m);
       return recordBuilder.build();
+    } else if (message instanceof Message) {
+      StructuredRecord.Builder recordBuilder = StructuredRecord.builder(config.getSpecificSchema(config.getMessageType()));
+      addHeaderData(recordBuilder, message, config);
+      recordBuilder.build();
     }
 
 //    else if (message instanceof ObjectMessage) {
@@ -87,7 +96,7 @@ public class JMSSourceUtils {
     recordBuilder.set(JMSConfig.MESSAGE_ID, Strings.isNullOrEmpty(message.getJMSMessageID()) ? "" : message.getJMSMessageID());
     recordBuilder.set(JMSConfig.MESSAGE_TIMESTAMP, message.getJMSTimestamp());
     recordBuilder.set(JMSConfig.CORRELATION_ID, Strings.isNullOrEmpty(message.getJMSCorrelationID()) ? "" : message.getJMSCorrelationID());
-    recordBuilder.set(JMSConfig.REPLY_TO, Strings.isNullOrEmpty(message.getJMSReplyTo().toString()) ? "" : message.getJMSReplyTo().toString());
+    recordBuilder.set(JMSConfig.REPLY_TO, message.getJMSReplyTo() == null ? "" : message.getJMSReplyTo().toString());
     recordBuilder.set(JMSConfig.DESTINATION, Strings.isNullOrEmpty(message.getJMSDestination().toString()) ? "" : message.getJMSDestination().toString());
     recordBuilder.set(JMSConfig.DELIVERY_MODE, message.getJMSDeliveryMode());
     recordBuilder.set(JMSConfig.REDELIVERED, message.getJMSRedelivered());
