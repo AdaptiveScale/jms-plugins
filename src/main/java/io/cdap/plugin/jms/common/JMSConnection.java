@@ -35,7 +35,6 @@ public class JMSConnection {
         this.config = config;
     }
 
-
     public Context getContext() {
         Properties properties = new Properties();
         properties.put(Context.INITIAL_CONTEXT_FACTORY, config.getJndiContextFactory());
@@ -84,14 +83,14 @@ public class JMSConnection {
     public Destination getDestination(Context context) {
         if (config.getType().equals("Topic")) {
             try {
-                return (Topic) context.lookup("MyTopic");
+                return (Topic) context.lookup(config.getDestination());
             } catch (NamingException e) {
                 logger.error("Cannot resolve the topic with the given name.", e);
                 throw new RuntimeException(e);
             }
         } else {
             try {
-                return (Queue) context.lookup("MyTopic");
+                return (Queue) context.lookup(config.getDestination());
             } catch (NamingException e) {
                 logger.error("Cannot resolve the queue with the given name.", e);
                 throw new RuntimeException(e);

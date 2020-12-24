@@ -24,14 +24,7 @@ import org.apache.spark.streaming.receiver.Receiver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.jms.Connection;
-import javax.jms.ConnectionFactory;
-import javax.jms.Destination;
-import javax.jms.JMSException;
-import javax.jms.Message;
-import javax.jms.MessageConsumer;
-import javax.jms.MessageListener;
-import javax.jms.Session;
+import javax.jms.*;
 import javax.naming.Context;
 
 public class JMSReceiver extends Receiver<StructuredRecord> implements MessageListener {
@@ -41,17 +34,18 @@ public class JMSReceiver extends Receiver<StructuredRecord> implements MessageLi
   private Connection connection;
   private StorageLevel storageLevel;
   private Session session;
-  private final JMSConnection jmsConnection;
+  private JMSConnection jmsConnection;
 
   public JMSReceiver(StorageLevel storageLevel, JMSConfig config) {
     super(storageLevel);
     this.storageLevel = storageLevel;
     this.config = config;
-    this.jmsConnection = new JMSConnection(config);
   }
 
   @Override
   public void onStart() {
+
+    this.jmsConnection = new JMSConnection(config);
 
     Context context = jmsConnection.getContext();
 
