@@ -92,11 +92,17 @@ public class JMSSourceUtils {
   private static StructuredRecord convertPureMessage(Message message, JMSConfig config) throws JMSException {
     StructuredRecord.Builder recordBuilder = StructuredRecord.builder(config.getSpecificSchema(config.getMessageType()));
     addHeaderData(recordBuilder, message, config);
-    // todo: we need to handle this like we did with the map
+    HashMap<String, String> m = new HashMap<>();
+    Enumeration<?> it = ((Message) message).getPropertyNames();
+    while (it.hasMoreElements()) {
+      String name = (String) it.nextElement();
+      m.put(name, ((Message) message).getStringProperty(name));
+    }
+    recordBuilder.set("payload", m);
     return recordBuilder.build();
   }
 
-  private static StructuredRecord.Builder addHeaderData(StructuredRecord.Builder recordBuilder, Message message,
+  private static void addHeaderData(StructuredRecord.Builder recordBuilder, Message message,
                                                         JMSConfig config) throws JMSException {
     recordBuilder.set(JMSConfig.MESSAGE_ID, Strings.isNullOrEmpty(message.getJMSMessageID()) ? "" : message.getJMSMessageID());
     recordBuilder.set(JMSConfig.MESSAGE_TIMESTAMP, message.getJMSTimestamp());
@@ -108,6 +114,5 @@ public class JMSSourceUtils {
     recordBuilder.set(JMSConfig.TYPE, Strings.isNullOrEmpty(message.getJMSType()) ? "" : message.getJMSType());
     recordBuilder.set(JMSConfig.EXPIRATION, message.getJMSExpiration());
     recordBuilder.set(JMSConfig.PRIORITY, message.getJMSPriority());
-    return recordBuilder;
   }
 }
