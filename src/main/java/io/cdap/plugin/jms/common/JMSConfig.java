@@ -86,6 +86,10 @@ public class JMSConfig extends ReferencePluginConfig implements Serializable {
   @Description("Specifies the schema of the records outputted from this plugin.")
   private String schema;
 
+  @Name("Destination")
+  @Description("Destination (Queue/Topic) name.")
+  private String destination;
+
   public static final String MESSAGE_ID = "messageId";
   public static final String MESSAGE_TIMESTAMP = "messageTimestamp";
   public static final String CORRELATION_ID = "correlationId";
@@ -119,6 +123,7 @@ public class JMSConfig extends ReferencePluginConfig implements Serializable {
     this.jndiUsername = jndiUsername;
     this.jndiPassword = jndiPassword;
     this.messageType = Strings.isNullOrEmpty(messageType) ? "Text" : messageType;
+    this.destination = destination;
   }
 
   public String getConnectionFactory() {
@@ -156,6 +161,8 @@ public class JMSConfig extends ReferencePluginConfig implements Serializable {
   public String getMessageType() {
     return messageType;
   }
+
+  public String getDestination() { return destination; }
 
   public void validate(FailureCollector failureCollector) {
 
@@ -201,18 +208,21 @@ public class JMSConfig extends ReferencePluginConfig implements Serializable {
     switch (type) {
       case "Message":
         return Schema.recordOf("message", baseSchemaFields);
+
       case "Bytes":
         baseSchemaFields.add(Schema.Field.of("payload", Schema.arrayOf(Schema.of(Schema.Type.BYTES))));
         return Schema.recordOf("message", baseSchemaFields);
+
       case "Map":
         baseSchemaFields.add(Schema.Field.of("payload", Schema.mapOf(Schema.of(Schema.Type.STRING),
                                                                      Schema.of(Schema.Type.STRING))));
         return Schema.recordOf("message", baseSchemaFields);
+
       case "Object":
         baseSchemaFields.add(Schema.Field.of("payload", Schema.of(Schema.Type.STRING)));
         return Schema.recordOf("message", baseSchemaFields);
 
-      default: // Text
+      default:
         baseSchemaFields.add(Schema.Field.of("payload", Schema.of(Schema.Type.STRING)));
         return Schema.recordOf("message", baseSchemaFields);
     }
