@@ -1,13 +1,29 @@
 package io.cdap.plugin.jms.source;
 
+/*
+ * Copyright © 2016-2020 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 import io.cdap.cdap.api.data.format.StructuredRecord;
-import io.cdap.plugin.jms.config.JMSConfig;
+import io.cdap.plugin.jms.common.JMSConfig;
+import io.cdap.plugin.jms.common.JMSConnection;
 import org.apache.spark.storage.StorageLevel;
 import org.apache.spark.streaming.receiver.Receiver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Properties;
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
 import javax.jms.Destination;
@@ -17,8 +33,6 @@ import javax.jms.MessageConsumer;
 import javax.jms.MessageListener;
 import javax.jms.Session;
 import javax.naming.Context;
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
 
 public class JMSReceiver extends Receiver<StructuredRecord> implements MessageListener {
 
@@ -27,30 +41,33 @@ public class JMSReceiver extends Receiver<StructuredRecord> implements MessageLi
   private Connection connection;
   private StorageLevel storageLevel;
   private Session session;
+  private final JMSConnection jmsConnection;
 
   public JMSReceiver(StorageLevel storageLevel, JMSConfig config) {
     super(storageLevel);
     this.storageLevel = storageLevel;
     this.config = config;
+    this.jmsConnection = new JMSConnection(config);
   }
 
   @Override
   public void onStart() {
 
-    Context context = getContext(config);
+    Context context = jmsConnection.getContext();
 
-    ConnectionFactory factory = getConnectionFactory(context);
+    ConnectionFactory factory = jmsConnection.getConnectionFactory(context);
 
-    connection = createConnection(factory);
+    connection = jmsConnection.createConnection(factory);
 
-    session = createSession(connection);
+    session = jmsConnection.createSession(connection);
 
-    Destination queue = getDestination(context);
+    Destination destination = jmsConnection.getDestination(context);
 
-    MessageConsumer messageConsumer = createConsumer(queue);
+    MessageConsumer messageConsumer = jmsConnection.createConsumer(session, destination);
 
-    setMessageListener(this, messageConsumer);
-    startConnection(connection);
+    jmsConnection.setMessageListener(this, messageConsumer);
+
+    jmsConnection.startConnection(connection);
   }
 
   @Override
@@ -71,82 +88,6 @@ public class JMSReceiver extends Receiver<StructuredRecord> implements MessageLi
       store(JMSSourceUtils.convertMessage(message, this.config));
     } catch (Exception e) {
       logger.error("Message couldn't be stored in spark memory.", e);
-      throw new RuntimeException(e);
-    }
-  }
-
-  private Context getContext(JMSConfig config) {
-    Properties properties = new Properties();
-    properties.put(Context.INITIAL_CONTEXT_FACTORY, config.getJndiContextFactory());
-    properties.put(Context.PROVIDER_URL, config.getProviderUrl());
-
-    try {
-      return new InitialContext(properties);
-    } catch (NamingException e) {
-      logger.error("Exception when creating initial context for connection factory.", e);
-      throw new RuntimeException(e);
-    }
-  }
-
-  private ConnectionFactory getConnectionFactory(Context context) {
-    try {
-      return (ConnectionFactory) context.lookup(config.getConnectionFactory());
-    } catch (NamingException e) {
-      logger.error("Exception when trying to do JNDI API lookup failed.", e);
-      throw new RuntimeException(e);
-    }
-  }
-
-  private Connection createConnection(ConnectionFactory factory) {
-    try {
-      return factory.createConnection(config.getJmsUsername(), config.getJmsPassword());
-    } catch (JMSException e) {
-      logger.error("Connection couldn't be created.", e);
-      throw new RuntimeException(e);
-    }
-  }
-
-  private Session createSession(Connection connection) {
-    try {
-      return connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-    } catch (JMSException e) {
-      logger.error("Session couldn't be created.", e);
-      throw new RuntimeException(e);
-    }
-  }
-
-  private Destination getDestination(Context context) {
-    try {
-      return (Destination) context.lookup("MyTopic");
-    } catch (NamingException e) {
-      logger.error("Exception when trying to do queue lookup failed.", e);
-      throw new RuntimeException(e);
-    }
-  }
-
-  private MessageConsumer createConsumer(Destination queue) {
-    try {
-      return session.createConsumer(queue);
-    } catch (JMSException e) {
-      logger.error("Consumer couldn't be created.", e);
-      throw new RuntimeException(e);
-    }
-  }
-
-  private void setMessageListener(MessageListener messageListener, MessageConsumer messageConsumer) {
-    try {
-      messageConsumer.setMessageListener(messageListener);
-    } catch (JMSException e) {
-      logger.error("Message listener couldn't be set.", e);
-      throw new RuntimeException(e);
-    }
-  }
-
-  private void startConnection(Connection connection) {
-    try {
-      connection.start();
-    } catch (JMSException e) {
-      logger.error("Connection couldn't be started.", e);
       throw new RuntimeException(e);
     }
   }

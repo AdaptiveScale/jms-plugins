@@ -19,7 +19,7 @@ package io.cdap.plugin.jms.source;
 import com.google.common.base.Strings;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.etl.api.streaming.StreamingContext;
-import io.cdap.plugin.jms.config.JMSConfig;
+import io.cdap.plugin.jms.common.JMSConfig;
 import org.apache.spark.storage.StorageLevel;
 import org.apache.spark.streaming.api.java.JavaDStream;
 import org.apache.spark.streaming.receiver.Receiver;

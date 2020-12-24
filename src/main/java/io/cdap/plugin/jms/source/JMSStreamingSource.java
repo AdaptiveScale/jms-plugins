@@ -27,7 +27,7 @@ import io.cdap.cdap.etl.api.streaming.StreamingContext;
 import io.cdap.cdap.etl.api.streaming.StreamingSource;
 import io.cdap.cdap.etl.api.streaming.StreamingSourceContext;
 import io.cdap.plugin.common.LineageRecorder;
-import io.cdap.plugin.jms.config.JMSConfig;
+import io.cdap.plugin.jms.common.JMSConfig;
 import org.apache.spark.streaming.api.java.JavaDStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
