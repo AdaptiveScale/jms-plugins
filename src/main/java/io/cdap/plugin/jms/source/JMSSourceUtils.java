@@ -79,26 +79,26 @@ public class JMSSourceUtils {
   private static StructuredRecord convertMapMessage(Message message, JMSConfig config) throws JMSException {
     StructuredRecord.Builder recordBuilder = StructuredRecord.builder(config.getSpecificSchema(config.getMessageType()));
     addHeaderData(recordBuilder, message, config);
-    HashMap<String, String> m = new HashMap<>();
-    Enumeration<?> it = ((MapMessage) message).getMapNames();
-    while (it.hasMoreElements()) {
-      String name = (String) it.nextElement();
-      m.put(name, ((MapMessage) message).getString(name));
+    HashMap<String, String> mapPayload = new HashMap<>();
+    Enumeration<?> mapNamesIterator = ((MapMessage) message).getMapNames();
+    while (mapNamesIterator.hasMoreElements()) {
+      String name = (String) mapNamesIterator.nextElement();
+      mapPayload.put(name, ((MapMessage) message).getString(name));
     }
-    recordBuilder.set("payload", m);
+    recordBuilder.set("payload", mapPayload);
     return recordBuilder.build();
   }
 
   private static StructuredRecord convertPureMessage(Message message, JMSConfig config) throws JMSException {
     StructuredRecord.Builder recordBuilder = StructuredRecord.builder(config.getSpecificSchema(config.getMessageType()));
     addHeaderData(recordBuilder, message, config);
-    HashMap<String, String> m = new HashMap<>();
-    Enumeration<?> it = ((Message) message).getPropertyNames();
-    while (it.hasMoreElements()) {
-      String name = (String) it.nextElement();
-      m.put(name, ((Message) message).getStringProperty(name));
+    HashMap<String, String> mapPayload = new HashMap<>();
+    Enumeration<?> mapPropertyNamesIterator = ((Message) message).getPropertyNames();
+    while (mapPropertyNamesIterator.hasMoreElements()) {
+      String name = (String) mapPropertyNamesIterator.nextElement();
+      mapPayload.put(name, ((Message) message).getStringProperty(name));
     }
-    recordBuilder.set("payload", m);
+    recordBuilder.set("payload", mapPayload);
     return recordBuilder.build();
   }
 
