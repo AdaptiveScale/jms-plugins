@@ -20,11 +20,20 @@ import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.jms.*;
+import java.util.Properties;
+import javax.jms.Connection;
+import javax.jms.ConnectionFactory;
+import javax.jms.Destination;
+import javax.jms.JMSException;
+import javax.jms.MessageConsumer;
+import javax.jms.MessageListener;
+import javax.jms.MessageProducer;
+import javax.jms.Queue;
+import javax.jms.Session;
+import javax.jms.Topic;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
-import java.util.Properties;
 
 public class JMSConnection {
 
@@ -82,16 +91,16 @@ public class JMSConnection {
     }
 
     public Destination getDestination(Context context) {
-        if (config.getType().equals("Topic")) {
+        if (config.getType().equals(JMSDestinationType.TOPIC.getName())) {
             try {
-                return (Topic) context.lookup("MyTopic");
+                return (Topic) context.lookup(config.getDestination());
             } catch (NamingException e) {
                 logger.error("Cannot resolve the topic with the given name.", e);
                 throw new RuntimeException(e);
             }
         } else {
             try {
-                return (Queue) context.lookup("MyTopic");
+                return (Queue) context.lookup(config.getDestination());
             } catch (NamingException e) {
                 logger.error("Cannot resolve the queue with the given name.", e);
                 throw new RuntimeException(e);

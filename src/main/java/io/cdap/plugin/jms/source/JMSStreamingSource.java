@@ -28,6 +28,7 @@ import io.cdap.cdap.etl.api.streaming.StreamingSource;
 import io.cdap.cdap.etl.api.streaming.StreamingSourceContext;
 import io.cdap.plugin.common.LineageRecorder;
 import io.cdap.plugin.jms.common.JMSConfig;
+import io.cdap.plugin.jms.common.JMSMessageType;
 import org.apache.spark.streaming.api.java.JavaDStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,7 +56,7 @@ public class JMSStreamingSource extends ReferenceStreamingSource<StructuredRecor
 
   @Override
   public void prepareRun(StreamingSourceContext context) throws Exception {
-    Schema schema = config.getSpecificSchema("Text");
+    Schema schema = config.getSpecificSchema(JMSMessageType.TEXT.getName());
     // record dataset lineage
     context.registerLineage(config.referenceName, schema);
 

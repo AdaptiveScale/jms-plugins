@@ -37,13 +37,16 @@ import org.apache.hadoop.io.Text;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.jms.*;
-import javax.naming.Context;
-import javax.naming.InitialContext;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 import java.util.stream.Collectors;
+import javax.jms.Connection;
+import javax.jms.ConnectionFactory;
+import javax.jms.Destination;
+import javax.jms.MessageProducer;
+import javax.jms.Session;
+import javax.jms.TextMessage;
+import javax.naming.Context;
 
 @Plugin(type = BatchSink.PLUGIN_TYPE)
 @Name("JMS")
@@ -109,8 +112,10 @@ public class JMSBatchSink extends ReferenceBatchSink<StructuredRecord, Text, Tex
     TextMessage textMessage = session.createTextMessage();
     textMessage.setText("Hello hi hi ...");
 
-    messageProducer.send(textMessage);
+    messageProducer.send(textMessage); // sends to the topic
     connection.close();
+
+    // prepare everything around the class that you need to send in hadoop and do the job
     emitter.emit(new KeyValue<>(new Text(""), new Text(textMessage.getText())));
   }
 

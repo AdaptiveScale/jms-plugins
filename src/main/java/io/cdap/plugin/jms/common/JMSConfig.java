@@ -32,64 +32,6 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 public class JMSConfig extends ReferencePluginConfig implements Serializable {
-  @Name("ConnectionFactory")
-  @Description("Name of the connection factory")
-  @Nullable
-  @Macro
-  private String connectionFactory;
-
-  @Name("JMSUsername")
-  @Description("Username to connect to JMS")
-  @Macro
-  private String jmsUsername;
-
-  @Name("JMSPassword")
-  @Description("Password to connect to JMS")
-  @Macro
-  private String jmsPassword;
-
-  @Name("ProviderURL")
-  @Description("Provide URL for JMS provider")
-  @Macro
-  private String providerUrl;
-
-  @Name("Type")
-  @Description("Queue or Topic")
-  @Macro
-  private String type;
-
-  @Name("JNDIContextFactory")
-  @Description("Name of the contact factory")
-  @Nullable
-  @Macro
-  private String jndiContextFactory;
-
-  @Name("JNDIUsername")
-  @Description("User name for JNDI")
-  @Nullable
-  @Macro
-  private String jndiUsername;
-
-  @Name("JNDIPassword")
-  @Description("password for JNDI")
-  @Nullable
-  @Macro
-  private String jndiPassword;
-
-  @Name("MessageType")
-  @Description("Message, Text, Bytes, Object, Map")
-  @Macro
-  private String messageType;
-
-  @Name("schema")
-  @Nullable
-  @Description("Specifies the schema of the records outputted from this plugin.")
-  private String schema;
-
-  @Name("Destination")
-  @Description("Destination (Queue/Topic) name.")
-  private String destination;
-
   public static final String MESSAGE_ID = "messageId";
   public static final String MESSAGE_TIMESTAMP = "messageTimestamp";
   public static final String CORRELATION_ID = "correlationId";
@@ -100,13 +42,59 @@ public class JMSConfig extends ReferencePluginConfig implements Serializable {
   public static final String TYPE = "type";
   public static final String EXPIRATION = "expiration";
   public static final String PRIORITY = "priority";
+  @Name("ConnectionFactory")
+  @Description("Name of the connection factory")
+  @Nullable
+  @Macro
+  private String connectionFactory;
+  @Name("JMSUsername")
+  @Description("Username to connect to JMS")
+  @Macro
+  private String jmsUsername;
+  @Name("JMSPassword")
+  @Description("Password to connect to JMS")
+  @Macro
+  private String jmsPassword;
+  @Name("ProviderURL")
+  @Description("Provide URL for JMS provider")
+  @Macro
+  private String providerUrl;
+  @Name("Type")
+  @Description("Queue or Topic")
+  @Macro
+  private String type;
+  @Name("JNDIContextFactory")
+  @Description("Name of the contact factory")
+  @Nullable
+  @Macro
+  private String jndiContextFactory;
+  @Name("JNDIUsername")
+  @Description("User name for JNDI")
+  @Nullable
+  @Macro
+  private String jndiUsername;
+  @Name("JNDIPassword")
+  @Description("password for JNDI")
+  @Nullable
+  @Macro
+  private String jndiPassword;
+  @Name("MessageType")
+  @Description("Message, Text, Bytes, Object, Map")
+  @Macro
+  private String messageType;
+  @Name("schema")
+  @Nullable
+  @Description("Specifies the schema of the records outputted from this plugin.")
+  private String schema;
+  @Name("Destination")
+  @Description("Destination (Queue/Topic) name.")
+  private String destination;
 
-  public JMSConfig()
-  {
+  public JMSConfig() {
     super("");
     this.connectionFactory = "ConnectionFactory";
-    this.type = "Queue";
-    this.messageType = "Text";
+    this.type = JMSDestinationType.QUEUE.getName();
+    this.messageType = JMSMessageType.TEXT.getName();
   }
 
   @VisibleForTesting
@@ -118,11 +106,11 @@ public class JMSConfig extends ReferencePluginConfig implements Serializable {
     this.jmsUsername = jmsUsername;
     this.jmsPassword = jmsPassword;
     this.providerUrl = providerUrl;
-    this.type = Strings.isNullOrEmpty(type) ? "Queue" : type;
+    this.type = Strings.isNullOrEmpty(type) ? JMSDestinationType.QUEUE.getName() : type;
     this.jndiContextFactory = jndiContextFactory;
     this.jndiUsername = jndiUsername;
     this.jndiPassword = jndiPassword;
-    this.messageType = Strings.isNullOrEmpty(messageType) ? "Text" : messageType;
+    this.messageType = Strings.isNullOrEmpty(messageType) ? JMSMessageType.TEXT.getName() : messageType;
     this.destination = destination;
   }
 
@@ -162,31 +150,34 @@ public class JMSConfig extends ReferencePluginConfig implements Serializable {
     return messageType;
   }
 
-  public String getDestination() { return destination; }
+  public String getDestination() {
+    return destination;
+  }
 
   public void validate(FailureCollector failureCollector) {
 
-    if (Strings.isNullOrEmpty(this.jmsUsername)) {
-      failureCollector.addFailure("JMS username must be provided", null)
+    if (Strings.isNullOrEmpty(jmsUsername)) {
+      failureCollector
+        .addFailure("JMS username must be provided.", "Please provide your JMS username.")
         .withConfigProperty(jmsUsername);
     }
 
-    if (Strings.isNullOrEmpty(this.jmsPassword)) {
-      failureCollector.addFailure("JMS password must be provided", null)
+    if (Strings.isNullOrEmpty(jmsPassword)) {
+      failureCollector
+        .addFailure("JMS password must be provided.", "Please provide your JMS password.")
         .withConfigProperty(jmsPassword);
     }
 
-    if (Strings.isNullOrEmpty(this.providerUrl)) {
-      failureCollector.addFailure("Provider URL must be provided", null)
+    if (Strings.isNullOrEmpty(providerUrl)) {
+      failureCollector
+        .addFailure("Provider URL must be provided.", "Please provide your provider URL.")
         .withConfigProperty(jmsPassword);
     }
 
-    if (Strings.isNullOrEmpty(this.type)) {
-      failureCollector.addFailure("Type must be provided", null);
-    }
-
-    if (Strings.isNullOrEmpty(this.type)) {
-      failureCollector.addFailure("Message type must be provided", null);
+    if (Strings.isNullOrEmpty(destination)) {
+      failureCollector
+        .addFailure("Destination must be provided.", "Please provide your topic/queue name.")
+        .withConfigProperty(destination);
     }
   }
 
@@ -205,26 +196,22 @@ public class JMSConfig extends ReferencePluginConfig implements Serializable {
         Schema.Field.of(PRIORITY, Schema.of(Schema.Type.INT))
       ));
 
-    switch (type) {
-      case "Message":
-        return Schema.recordOf("message", baseSchemaFields);
-
-      case "Bytes":
-        baseSchemaFields.add(Schema.Field.of("payload", Schema.arrayOf(Schema.of(Schema.Type.BYTES))));
-        return Schema.recordOf("message", baseSchemaFields);
-
-      case "Map":
-        baseSchemaFields.add(Schema.Field.of("payload", Schema.mapOf(Schema.of(Schema.Type.STRING),
-                                                                     Schema.of(Schema.Type.STRING))));
-        return Schema.recordOf("message", baseSchemaFields);
-
-      case "Object":
-        baseSchemaFields.add(Schema.Field.of("payload", Schema.of(Schema.Type.STRING)));
-        return Schema.recordOf("message", baseSchemaFields);
-
-      default:
-        baseSchemaFields.add(Schema.Field.of("payload", Schema.of(Schema.Type.STRING)));
-        return Schema.recordOf("message", baseSchemaFields);
+    if (type.equals(JMSMessageType.MESSAGE.getName())) {
+      return Schema.recordOf("message", baseSchemaFields);
+    } else if (type.equals(JMSMessageType.BYTES.getName())) {
+      baseSchemaFields.add(Schema.Field.of("payload", Schema.arrayOf(Schema.of(Schema.Type.BYTES))));
+      return Schema.recordOf("message", baseSchemaFields);
+    } else if (type.equals(JMSMessageType.MAP.getName())) {
+      baseSchemaFields.add(Schema.Field.of("payload", Schema.mapOf(Schema.of(Schema.Type.STRING),
+                                                                   Schema.of(Schema.Type.STRING))));
+      return Schema.recordOf("message", baseSchemaFields);
+    } else if (type.equals(JMSMessageType.OBJECT.getName())) {
+      baseSchemaFields.add(Schema.Field.of("payload", Schema.of(Schema.Type.STRING)));
+      return Schema.recordOf("message", baseSchemaFields);
+    } else {
+      // TEXT
+      baseSchemaFields.add(Schema.Field.of("payload", Schema.of(Schema.Type.STRING)));
+      return Schema.recordOf("message", baseSchemaFields);
     }
   }
 }

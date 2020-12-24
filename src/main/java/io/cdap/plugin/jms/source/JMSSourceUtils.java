@@ -20,6 +20,7 @@ import com.google.common.base.Strings;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.etl.api.streaming.StreamingContext;
 import io.cdap.plugin.jms.common.JMSConfig;
+import io.cdap.plugin.jms.common.JMSMessageType;
 import org.apache.spark.storage.StorageLevel;
 import org.apache.spark.streaming.api.java.JavaDStream;
 import org.apache.spark.streaming.receiver.Receiver;
@@ -41,17 +42,17 @@ public class JMSSourceUtils {
     return context.getSparkStreamingContext().receiverStream(JMSReceiver);
   }
 
-  public static StructuredRecord convertMessage(Message message, JMSConfig config) throws JMSException {
-    if (message instanceof TextMessage && config.getMessageType().equals("Text")) {
-      return convertTextMessage(message, config);
-    } else if (message instanceof BytesMessage && config.getMessageType().equals("Bytes")) {
+  public static StructuredRecord convertMessage(Message message, JMSConfig config) throws JMSException, IllegalArgumentException {
+    if (message instanceof BytesMessage && config.getMessageType().equals(JMSMessageType.BYTES.getName())) {
       return convertByteMessage(message, config);
-    } else if (message instanceof MapMessage && config.getMessageType().equals("Map")) {
+    } else if (message instanceof MapMessage && config.getMessageType().equals(JMSMessageType.MAP.getName())) {
       return convertMapMessage(message, config);
-    } else if (message instanceof ObjectMessage && config.getMessageType().equals("Object")) {
+    } else if (message instanceof ObjectMessage && config.getMessageType().equals(JMSMessageType.OBJECT.getName())) {
       return null;
-    } else if (config.getMessageType().equals("Message")) {
+    } else if (message instanceof Message && config.getMessageType().equals(JMSMessageType.MESSAGE.getName())) {
       return convertPureMessage(message, config);
+    } else if (message instanceof TextMessage && config.getMessageType().equals(JMSMessageType.TEXT.getName())) {
+      return convertTextMessage(message, config);
     }
     return null;
   }
