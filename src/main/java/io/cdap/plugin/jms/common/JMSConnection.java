@@ -44,7 +44,6 @@ public class JMSConnection {
         this.config = config;
     }
 
-
     public Context getContext() {
         Properties properties = new Properties();
         properties.put(Context.INITIAL_CONTEXT_FACTORY, config.getJndiContextFactory());
