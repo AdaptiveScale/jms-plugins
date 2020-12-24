@@ -16,6 +16,7 @@ package io.cdap.plugin.jms.common;
  * the License.
  */
 
+import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +40,11 @@ public class JMSConnection {
         Properties properties = new Properties();
         properties.put(Context.INITIAL_CONTEXT_FACTORY, config.getJndiContextFactory());
         properties.put(Context.PROVIDER_URL, config.getProviderUrl());
+
+        if (!(Strings.isNullOrEmpty(config.getJndiUsername()) && Strings.isNullOrEmpty(config.getJndiPassword()))) {
+            properties.put(Context.SECURITY_PRINCIPAL, config.getJndiUsername()); // todo: test this
+            properties.put(Context.SECURITY_CREDENTIALS, config.getJndiPassword());
+        }
 
         try {
             return new InitialContext(properties);
@@ -76,11 +82,20 @@ public class JMSConnection {
     }
 
     public Destination getDestination(Context context) {
-        try {
-            return (Destination) context.lookup("MyTopic");
-        } catch (NamingException e) {
-            logger.error("Exception when trying to do queue lookup failed.", e);
-            throw new RuntimeException(e);
+        if (config.getType().equals("Topic")) {
+            try {
+                return (Topic) context.lookup("MyTopic");
+            } catch (NamingException e) {
+                logger.error("Cannot resolve the topic with the given name.", e);
+                throw new RuntimeException(e);
+            }
+        } else {
+            try {
+                return (Queue) context.lookup("MyTopic");
+            } catch (NamingException e) {
+                logger.error("Cannot resolve the queue with the given name.", e);
+                throw new RuntimeException(e);
+            }
         }
     }
 

@@ -42,15 +42,15 @@ public class JMSSourceUtils {
   }
 
   public static StructuredRecord convertMessage(Message message, JMSConfig config) throws JMSException {
-    if (message instanceof TextMessage) {
+    if (message instanceof TextMessage && config.getMessageType().equals("Text")) {
       return convertTextMessage(message, config);
-    } else if (message instanceof BytesMessage) {
+    } else if (message instanceof BytesMessage && config.getMessageType().equals("Bytes")) {
       return convertByteMessage(message, config);
-    } else if (message instanceof MapMessage) {
+    } else if (message instanceof MapMessage && config.getMessageType().equals("Map")) {
       return convertMapMessage(message, config);
-    } else if (message instanceof ObjectMessage) {
+    } else if (message instanceof ObjectMessage && config.getMessageType().equals("Object")) {
       return null;
-    } else if (message instanceof Message) {
+    } else if (config.getMessageType().equals("Message")) {
       return convertPureMessage(message, config);
     }
     return null;
