@@ -111,7 +111,7 @@ public class JMSBatchSink extends ReferenceBatchSink<StructuredRecord, Text, Tex
 
     messageProducer.send(textMessage);
     connection.close();
-//    emitter.emit(new KeyValue<>(new Text("Status"), new Text("Sent")));
+    emitter.emit(new KeyValue<>(new Text(""), new Text(textMessage.getText())));
   }
 
   @Override

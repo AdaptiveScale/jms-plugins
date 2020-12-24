@@ -41,6 +41,11 @@
         },
         {
           "widget-type": "textbox",
+          "label": "Destination",
+          "name": "Destination"
+        },
+        {
+          "widget-type": "textbox",
           "label": "JNDI Context Factory",
           "name": "JNDIContextFactory"
         },
