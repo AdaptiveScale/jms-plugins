@@ -35,36 +35,51 @@ import javax.jms.ObjectMessage;
 import javax.jms.TextMessage;
 
 public class JMSSourceUtils {
+  private static final String RECORDS_UPDATED_METRIC = "records.updated";
+  private StreamingContext context;
 
-  static JavaDStream<StructuredRecord> getJavaDStream(StreamingContext context,
+  public JMSSourceUtils(StreamingContext context) {
+    this.context = context;
+  }
+
+  static JavaDStream<StructuredRecord> getJavaDStream(StreamingContext context, JMSSourceUtils jmsSourceUtils,
                                                       JMSConfig config) {
-    Receiver<StructuredRecord> JMSReceiver = new JMSReceiver(StorageLevel.MEMORY_AND_DISK_SER_2(), config);
+    Receiver<StructuredRecord> JMSReceiver = new JMSReceiver(jmsSourceUtils, config, StorageLevel.MEMORY_AND_DISK_SER_2());
     return context.getSparkStreamingContext().receiverStream(JMSReceiver);
   }
 
-  public static StructuredRecord convertMessage(Message message, JMSConfig config) throws JMSException, IllegalArgumentException {
+  public StructuredRecord convertMessage(Message message, JMSConfig config) throws JMSException, IllegalArgumentException {
     if (message instanceof BytesMessage && config.getMessageType().equals(JMSMessageType.BYTES.getName())) {
-      return convertByteMessage(message, config);
+      StructuredRecord record = convertByteMessage(message, config);
+      recordMetric(this.context);
+      return record;
     } else if (message instanceof MapMessage && config.getMessageType().equals(JMSMessageType.MAP.getName())) {
-      return convertMapMessage(message, config);
+      StructuredRecord record = convertMapMessage(message, config);
+      recordMetric(this.context);
+      return record;
     } else if (message instanceof ObjectMessage && config.getMessageType().equals(JMSMessageType.OBJECT.getName())) {
       return null;
     } else if (message instanceof Message && config.getMessageType().equals(JMSMessageType.MESSAGE.getName())) {
-      return convertPureMessage(message, config);
+      StructuredRecord record = convertPureMessage(message, config);
+      recordMetric(this.context);
+      return record;
     } else if (message instanceof TextMessage && config.getMessageType().equals(JMSMessageType.TEXT.getName())) {
-      return convertTextMessage(message, config);
+      StructuredRecord record = convertTextMessage(message, config);
+      recordMetric(this.context);
+      return record;
     }
     return null;
   }
 
-  private static StructuredRecord convertTextMessage(Message message, JMSConfig config) throws JMSException {
+  private StructuredRecord convertTextMessage(Message message, JMSConfig config) throws JMSException {
     StructuredRecord.Builder recordBuilder = StructuredRecord.builder(config.getSpecificSchema(config.getMessageType()));
     addHeaderData(recordBuilder, message, config);
     recordBuilder.set("payload", ((TextMessage) message).getText());
+
     return recordBuilder.build();
   }
 
-  private static StructuredRecord convertByteMessage(Message message, JMSConfig config) throws JMSException {
+  private StructuredRecord convertByteMessage(Message message, JMSConfig config) throws JMSException {
     StructuredRecord.Builder recordBuilder = StructuredRecord.builder(config.getSpecificSchema(config.getMessageType()));
     addHeaderData(recordBuilder, message, config);
     int byteLength = (int) ((BytesMessage) message).getBodyLength();
@@ -76,7 +91,7 @@ public class JMSSourceUtils {
     return recordBuilder.build();
   }
 
-  private static StructuredRecord convertMapMessage(Message message, JMSConfig config) throws JMSException {
+  private StructuredRecord convertMapMessage(Message message, JMSConfig config) throws JMSException {
     StructuredRecord.Builder recordBuilder = StructuredRecord.builder(config.getSpecificSchema(config.getMessageType()));
     addHeaderData(recordBuilder, message, config);
     HashMap<String, String> mapPayload = new HashMap<>();
@@ -89,7 +104,7 @@ public class JMSSourceUtils {
     return recordBuilder.build();
   }
 
-  private static StructuredRecord convertPureMessage(Message message, JMSConfig config) throws JMSException {
+  private StructuredRecord convertPureMessage(Message message, JMSConfig config) throws JMSException {
     StructuredRecord.Builder recordBuilder = StructuredRecord.builder(config.getSpecificSchema(config.getMessageType()));
     addHeaderData(recordBuilder, message, config);
     HashMap<String, String> mapPayload = new HashMap<>();
@@ -102,8 +117,8 @@ public class JMSSourceUtils {
     return recordBuilder.build();
   }
 
-  private static void addHeaderData(StructuredRecord.Builder recordBuilder, Message message,
-                                                        JMSConfig config) throws JMSException {
+  private void addHeaderData(StructuredRecord.Builder recordBuilder, Message message,
+                                    JMSConfig config) throws JMSException {
     recordBuilder.set(JMSConfig.MESSAGE_ID, Strings.isNullOrEmpty(message.getJMSMessageID()) ? "" : message.getJMSMessageID());
     recordBuilder.set(JMSConfig.MESSAGE_TIMESTAMP, message.getJMSTimestamp());
     recordBuilder.set(JMSConfig.CORRELATION_ID, Strings.isNullOrEmpty(message.getJMSCorrelationID()) ? "" : message.getJMSCorrelationID());
@@ -114,5 +129,9 @@ public class JMSSourceUtils {
     recordBuilder.set(JMSConfig.TYPE, Strings.isNullOrEmpty(message.getJMSType()) ? "" : message.getJMSType());
     recordBuilder.set(JMSConfig.EXPIRATION, message.getJMSExpiration());
     recordBuilder.set(JMSConfig.PRIORITY, message.getJMSPriority());
+  }
+
+  private void recordMetric(StreamingContext context) {
+    context.getMetrics().count(RECORDS_UPDATED_METRIC, 1);
   }
 }

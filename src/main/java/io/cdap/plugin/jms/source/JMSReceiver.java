@@ -24,7 +24,14 @@ import org.apache.spark.streaming.receiver.Receiver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.jms.*;
+import javax.jms.Connection;
+import javax.jms.ConnectionFactory;
+import javax.jms.Destination;
+import javax.jms.JMSException;
+import javax.jms.Message;
+import javax.jms.MessageConsumer;
+import javax.jms.MessageListener;
+import javax.jms.Session;
 import javax.naming.Context;
 
 public class JMSReceiver extends Receiver<StructuredRecord> implements MessageListener {
@@ -35,11 +42,14 @@ public class JMSReceiver extends Receiver<StructuredRecord> implements MessageLi
   private StorageLevel storageLevel;
   private Session session;
   private JMSConnection jmsConnection;
+  private JMSSourceUtils jmsSourceUtils;
 
-  public JMSReceiver(StorageLevel storageLevel, JMSConfig config) {
+  public JMSReceiver(JMSSourceUtils jmsSourceUtils, JMSConfig config, StorageLevel storageLevel) {
     super(storageLevel);
+    this.jmsSourceUtils = jmsSourceUtils;
     this.storageLevel = storageLevel;
     this.config = config;
+
   }
 
   @Override
@@ -79,7 +89,7 @@ public class JMSReceiver extends Receiver<StructuredRecord> implements MessageLi
   @Override
   public void onMessage(Message message) {
     try {
-      store(JMSSourceUtils.convertMessage(message, this.config));
+      store(this.jmsSourceUtils.convertMessage(message, this.config));
     } catch (Exception e) {
       logger.error("Message couldn't be stored in spark memory.", e);
       throw new RuntimeException(e);

@@ -72,7 +72,8 @@ public class JMSStreamingSource extends ReferenceStreamingSource<StructuredRecor
     FailureCollector collector = context.getFailureCollector();
     config.validate(collector);
     collector.getOrThrowException();
+    JMSSourceUtils jmsSourceUtils = new JMSSourceUtils(context);
 
-    return JMSSourceUtils.getJavaDStream(context, config);
+    return JMSSourceUtils.getJavaDStream(context, jmsSourceUtils, config);
   }
 }
