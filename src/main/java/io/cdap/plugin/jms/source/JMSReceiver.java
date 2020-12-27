@@ -17,6 +17,7 @@ package io.cdap.plugin.jms.source;
  */
 
 import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.etl.api.streaming.StreamingContext;
 import io.cdap.plugin.jms.common.JMSConfig;
 import io.cdap.plugin.jms.common.JMSConnection;
 import org.apache.spark.storage.StorageLevel;
@@ -35,22 +36,24 @@ import javax.jms.Session;
 import javax.naming.Context;
 
 public class JMSReceiver extends Receiver<StructuredRecord> implements MessageListener {
+  private static final String RECORDS_UPDATED_METRIC = "records.updated";
 
   private static Logger logger = LoggerFactory.getLogger(JMSReceiver.class);
-  private JMSSourceUtils jmsSourceUtils;
   private JMSConfig config;
   private StorageLevel storageLevel;
   private Connection connection;
   private Session session;
   private JMSConnection jmsConnection;
+  private StreamingContext streamingContext;
 
-
-  public JMSReceiver(JMSSourceUtils jmsSourceUtils, JMSConfig config, StorageLevel storageLevel) {
+  public JMSReceiver(JMSConfig config, StorageLevel storageLevel) {
     super(storageLevel);
-    this.jmsSourceUtils = jmsSourceUtils;
     this.storageLevel = storageLevel;
     this.config = config;
+  }
 
+  public void setStreamingContext(StreamingContext streamingContext) {
+    this.streamingContext = streamingContext;
   }
 
   @Override
@@ -90,10 +93,15 @@ public class JMSReceiver extends Receiver<StructuredRecord> implements MessageLi
   @Override
   public void onMessage(Message message) {
     try {
-      store(this.jmsSourceUtils.convertMessage(message, this.config));
+      store(JMSSourceUtils.convertMessage(message, this.config));
+      recordMetric(this.streamingContext);
     } catch (Exception e) {
       logger.error("Message couldn't be stored in spark memory.", e);
       throw new RuntimeException(e);
     }
+  }
+
+  private void recordMetric(StreamingContext context) {
+    context.getMetrics().count(RECORDS_UPDATED_METRIC, 1);
   }
 }
