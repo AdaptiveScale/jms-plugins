@@ -18,7 +18,6 @@ package io.cdap.plugin.jms.sink;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import io.cdap.plugin.jms.common.JMSConfig;
 import io.cdap.plugin.jms.common.JMSConnection;
 import io.cdap.plugin.jms.common.JMSMessageType;
 import org.apache.hadoop.conf.Configuration;
@@ -48,7 +47,7 @@ public class JMSRecordWriter extends RecordWriter<NullWritable, Text> {
   private static final Logger LOG = LoggerFactory.getLogger(JMSRecordWriter.class);
   private static final Gson GSON = new GsonBuilder().create();
 
-  private final JMSConfig jmsConfig;
+  private final JMSBatchSinkConfig jmsConfig;
   private Connection connection;
   private Session session;
   private MessageProducer messageProducer;
@@ -57,7 +56,7 @@ public class JMSRecordWriter extends RecordWriter<NullWritable, Text> {
   public JMSRecordWriter(TaskAttemptContext context) {
     Configuration config = context.getConfiguration();
     String configJson = config.get(JMSOutputFormatProvider.PROPERTY_CONFIG_JSON);
-    jmsConfig = GSON.fromJson(configJson, JMSConfig.class);
+    jmsConfig = GSON.fromJson(configJson, JMSBatchSinkConfig.class);
     this.jmsConnection = new JMSConnection(jmsConfig);
     establishConnection();
   }

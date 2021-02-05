@@ -19,17 +19,17 @@ package io.cdap.plugin.jms.common;
 /**
  * An Enum specifying destination types.
  */
-public enum JMSDestinationType {
+public enum JMSDataStructure {
   QUEUE("Queue"),
   TOPIC("Topic");
 
-  private String destinationType;
+  private String dataStructure;
 
-  JMSDestinationType(String destinationType) {
-    this.destinationType = destinationType;
+  JMSDataStructure(String dataStructure) {
+    this.dataStructure = dataStructure;
   }
 
   public String getName() {
-    return destinationType;
+    return dataStructure;
   }
 }

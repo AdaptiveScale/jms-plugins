@@ -17,6 +17,8 @@
 package io.cdap.plugin.jms.common;
 
 import com.google.common.base.Strings;
+import io.cdap.plugin.jms.sink.JMSBatchSinkConfig;
+import io.cdap.plugin.jms.source.JMSStreamingSourceConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,10 +57,20 @@ public class JMSConnection {
     properties.put(Context.INITIAL_CONTEXT_FACTORY, config.getJndiContextFactory());
     properties.put(Context.PROVIDER_URL, config.getProviderUrl());
 
-    if (config.getType().equals(JMSDestinationType.TOPIC.getName())) {
-      properties.put(String.format("topic.%s", config.getName()), config.getName());
+    if (config instanceof JMSBatchSinkConfig) {
+      String destinationName = ((JMSBatchSinkConfig) config).getDestinationName();
+      if (config.getType().equals(JMSDataStructure.TOPIC.getName())) {
+        properties.put(String.format("topic.%s", destinationName), destinationName);
+      } else {
+        properties.put(String.format("queue.%s", destinationName), destinationName);
+      }
     } else {
-      properties.put(String.format("queue.%s", config.getName()), config.getName());
+      String sourceName = ((JMSStreamingSourceConfig) config).getSourceName();
+      if (config.getType().equals(JMSDataStructure.TOPIC.getName())) {
+        properties.put(String.format("topic.%s", sourceName), sourceName);
+      } else {
+        properties.put(String.format("queue.%s", sourceName), sourceName);
+      }
     }
 
     if (!(Strings.isNullOrEmpty(config.getJndiUsername()) && Strings.isNullOrEmpty(config.getJndiPassword()))) {
@@ -131,52 +143,57 @@ public class JMSConnection {
   }
 
   public Destination getSource(Context context) {
-    if (config.getType().equals(JMSDestinationType.TOPIC.getName())) {
+    String sourceName = ((JMSStreamingSourceConfig) config).getSourceName();
+    if (config.getType().equals(JMSDataStructure.TOPIC.getName())) {
       try {
-        return (Topic) context.lookup(config.getName());
+        return (Topic) context.lookup(sourceName);
       } catch (NamingException e) {
-        throw new RuntimeException("Failed to resolve the topic " + config.getName(), e);
+        throw new RuntimeException("Failed to resolve the topic " + sourceName, e);
       }
     } else {
       try {
-        return (Queue) context.lookup(config.getName());
+        return (Queue) context.lookup(sourceName);
       } catch (NamingException e) {
-        throw new RuntimeException("Failed to resolve the queue " + config.getName(), e);
+        throw new RuntimeException("Failed to resolve the queue " + sourceName, e);
       }
     }
   }
 
   public Destination getSink(Context context, Session session) {
-    if (config.getType().equals(JMSDestinationType.TOPIC.getName())) {
+    String destinationName = ((JMSBatchSinkConfig) config).getDestinationName();
+
+    if (config.getType().equals(JMSDataStructure.TOPIC.getName())) {
       try {
-        return (Topic) context.lookup(config.getName());
+        return (Topic) context.lookup(destinationName);
       } catch (NamingException e) {
-        LOG.warn("Failed to resolve queue " + config.getName(), e);
+        LOG.warn("Failed to resolve queue " + destinationName, e);
         return createSinkTopic(session);
       }
     } else {
       try {
-        return (Queue) context.lookup(config.getName());
+        return (Queue) context.lookup(destinationName);
       } catch (NamingException e) {
-        LOG.warn("Failed to resolve queue " + config.getName(), e);
+        LOG.warn("Failed to resolve queue " + destinationName, e);
         return createSinkQueue(session);
       }
     }
   }
 
   private Destination createSinkTopic(Session session) {
-    LOG.info("Creating topic " + config.getName());
+    String destinationName = ((JMSBatchSinkConfig) config).getDestinationName();
+    LOG.info("Creating topic " + destinationName);
     try {
-      return session.createTopic(config.getName());
+      return session.createTopic(destinationName);
     } catch (JMSException e) {
       throw new RuntimeException(String.format("%s: %s", e.getErrorCode(), e.getMessage()));
     }
   }
 
   private Destination createSinkQueue(Session session) {
-    LOG.info("Creating queue " + config.getName());
+    String destinationName = ((JMSBatchSinkConfig) config).getDestinationName();
+    LOG.info("Creating queue " + destinationName);
     try {
-      return session.createQueue(config.getName());
+      return session.createQueue(destinationName);
     } catch (JMSException e) {
       throw new RuntimeException(String.format("%s: %s", e.getErrorCode(), e.getMessage()));
     }

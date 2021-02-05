@@ -30,7 +30,6 @@ import io.cdap.cdap.etl.api.batch.BatchSinkContext;
 import io.cdap.cdap.format.StructuredRecordStringConverter;
 import io.cdap.plugin.common.LineageRecorder;
 import io.cdap.plugin.common.ReferenceBatchSink;
-import io.cdap.plugin.jms.common.JMSConfig;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import java.io.IOException;
@@ -45,9 +44,9 @@ import java.util.stream.Collectors;
 @Description("JMS sink to write events to JMS")
 public class JMSBatchSink extends ReferenceBatchSink<StructuredRecord, NullWritable, Text> {
 
-  private final JMSConfig config;
+  private final JMSBatchSinkConfig config;
 
-  public JMSBatchSink(JMSConfig config) {
+  public JMSBatchSink(JMSBatchSinkConfig config) {
     super(config);
     this.config = config;
   }

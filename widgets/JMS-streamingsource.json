@@ -9,8 +9,16 @@
       "properties": [
         {
           "widget-type": "textbox",
+          "label": "Reference Name",
+          "name": "referenceName"
+        },
+        {
+          "widget-type": "textbox",
           "label": "Connection Factory",
-          "name": "connectionFactory"
+          "name": "connectionFactory",
+          "widget-attributes": {
+            "default": "ConnectionFactory"
+          }
         },
         {
           "widget-type": "textbox",
@@ -41,13 +49,16 @@
         },
         {
         "widget-type": "textbox",
-        "label": "Queue/Topic name",
-        "name": "name"
+        "label": "Source Queue or Topic name",
+        "name": "sourceName"
         },
         {
           "widget-type": "textbox",
           "label": "JNDI Context Factory",
-          "name": "jndiContextFactory"
+          "name": "jndiContextFactory",
+          "widget-attributes": {
+            "default": "org.apache.activemq.jndi.ActiveMQInitialContextFactory"
+          }
         },
         {
           "widget-type": "textbox",
@@ -58,6 +69,22 @@
           "widget-type": "password",
           "label": "JNDI Password",
           "name": "jndiPassword"
+        },
+        {
+          "widget-type": "toggle",
+          "name": "skipMessageHeaders",
+          "label": "Skip Message Headers",
+          "widget-attributes": {
+            "default": "false",
+            "on": {
+              "value": "true",
+              "label": "True"
+            },
+            "off": {
+              "value": "false",
+              "label": "False"
+            }
+          }
         },
         {
           "widget-type": "select",

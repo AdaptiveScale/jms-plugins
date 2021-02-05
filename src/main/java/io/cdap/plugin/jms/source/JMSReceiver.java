@@ -17,7 +17,6 @@
 package io.cdap.plugin.jms.source;
 
 import io.cdap.cdap.api.data.format.StructuredRecord;
-import io.cdap.plugin.jms.common.JMSConfig;
 import io.cdap.plugin.jms.common.JMSConnection;
 import org.apache.spark.storage.StorageLevel;
 import org.apache.spark.streaming.receiver.Receiver;
@@ -38,13 +37,13 @@ import javax.naming.Context;
  */
 public class JMSReceiver extends Receiver<StructuredRecord> implements MessageListener {
   private static final Logger LOG = LoggerFactory.getLogger(JMSReceiver.class);
-  private JMSConfig config;
+  private JMSStreamingSourceConfig config;
   private Connection connection;
   private StorageLevel storageLevel;
   private Session session;
   private JMSConnection jmsConnection;
 
-  public JMSReceiver(StorageLevel storageLevel, JMSConfig config) {
+  public JMSReceiver(StorageLevel storageLevel, JMSStreamingSourceConfig config) {
     super(storageLevel);
     this.storageLevel = storageLevel;
     this.config = config;

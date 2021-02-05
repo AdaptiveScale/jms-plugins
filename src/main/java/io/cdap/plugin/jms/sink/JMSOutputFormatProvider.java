@@ -20,7 +20,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.data.batch.OutputFormatProvider;
-import io.cdap.plugin.jms.common.JMSConfig;
 
 import java.util.Map;
 
@@ -33,7 +32,7 @@ public class JMSOutputFormatProvider implements OutputFormatProvider {
   private static final Gson GSON = new GsonBuilder().create();
   private final Map<String, String> conf;
 
-  public JMSOutputFormatProvider(JMSConfig config) {
+  public JMSOutputFormatProvider(JMSBatchSinkConfig config) {
     this.conf = new ImmutableMap.Builder<String, String>()
       .put(PROPERTY_CONFIG_JSON, GSON.toJson(config))
       .build();
