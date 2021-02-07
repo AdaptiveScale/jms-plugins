@@ -42,19 +42,19 @@ public class JMSBatchSinkConfig extends JMSConfig {
     super();
   }
 
-  public JMSBatchSinkConfig(String referenceName, String connectionFactory, String jmsUsername,
-                                  String jmsPassword, String providerUrl, String type, String jndiContextFactory,
-                                  String jndiUsername, String jndiPassword, String messageType) {
-    super(referenceName, connectionFactory, jmsUsername, jmsPassword, providerUrl, type, jndiContextFactory,
-          jndiUsername, jndiPassword, messageType);
-    this.destinationName = destinationName;
-  }
+//  public JMSBatchSinkConfig(String referenceName, String connectionFactory, String jmsUsername,
+//                                  String jmsPassword, String providerUrl, String type, String jndiContextFactory,
+//                                  String jndiUsername, String jndiPassword, String messageType) {
+//    super(referenceName, connectionFactory, jmsUsername, jmsPassword, providerUrl, type, jndiContextFactory,
+//          jndiUsername, jndiPassword, messageType);
+//    this.destinationName = destinationName;
+//  }
 
   public String getDestinationName() {
     return destinationName;
   }
 
-  public void validateParams(FailureCollector failureCollector) {
+  public void validate(FailureCollector failureCollector) {
     if (Strings.isNullOrEmpty(destinationName) && !containsMacro(NAME_DESTINATION)) {
       failureCollector
         .addFailure("Destination must be provided.", "Please provide your topic/queue name.")

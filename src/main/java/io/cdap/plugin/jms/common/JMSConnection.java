@@ -18,7 +18,7 @@ package io.cdap.plugin.jms.common;
 
 import com.google.common.base.Strings;
 import io.cdap.plugin.jms.sink.JMSBatchSinkConfig;
-import io.cdap.plugin.jms.source.JMSStreamingSourceConfig;
+import io.cdap.plugin.jms.source.JMSStreamingSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,7 +65,7 @@ public class JMSConnection {
         properties.put(String.format("queue.%s", destinationName), destinationName);
       }
     } else {
-      String sourceName = ((JMSStreamingSourceConfig) config).getSourceName();
+      String sourceName = ((JMSStreamingSource.JMSStreamingSourceConfig) config).getSourceName();
       if (config.getType().equals(JMSDataStructure.TOPIC.getName())) {
         properties.put(String.format("topic.%s", sourceName), sourceName);
       } else {
@@ -143,7 +143,7 @@ public class JMSConnection {
   }
 
   public Destination getSource(Context context) {
-    String sourceName = ((JMSStreamingSourceConfig) config).getSourceName();
+    String sourceName = ((JMSStreamingSource.JMSStreamingSourceConfig) config).getSourceName();
     if (config.getType().equals(JMSDataStructure.TOPIC.getName())) {
       try {
         return (Topic) context.lookup(sourceName);

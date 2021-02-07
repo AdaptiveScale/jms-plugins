@@ -33,7 +33,10 @@
         {
           "widget-type": "text",
           "label": "Provider URL",
-          "name": "providerUrl"
+          "name": "providerUrl",
+          "widget-attributes": {
+            "placeholder": "tcp://hostname:61616"
+          }
         },
         {
           "widget-type": "select",

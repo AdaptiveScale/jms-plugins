@@ -42,12 +42,13 @@ import javax.jms.TextMessage;
 public class JMSSourceUtils {
 
   static JavaDStream<StructuredRecord> getJavaDStream(StreamingContext context,
-                                                      JMSStreamingSourceConfig config) {
+                                                      JMSStreamingSource.JMSStreamingSourceConfig config) {
     Receiver<StructuredRecord> jmsReceiver = new JMSReceiver(StorageLevel.MEMORY_AND_DISK_SER_2(), config);
     return context.getSparkStreamingContext().receiverStream(jmsReceiver);
   }
 
-  public static StructuredRecord convertMessage(Message message, JMSStreamingSourceConfig config) throws JMSException,
+  public static StructuredRecord convertMessage(Message message, JMSStreamingSource.JMSStreamingSourceConfig config)
+    throws JMSException,
     IllegalArgumentException {
     if (message instanceof BytesMessage && config.getMessageType().equals(JMSMessageType.BYTES.getName())) {
       return convertByteMessage(message, config);
@@ -68,19 +69,21 @@ public class JMSSourceUtils {
     }
   }
 
-  private static StructuredRecord convertTextMessage(Message message, JMSStreamingSourceConfig config)
+  private static StructuredRecord convertTextMessage(Message message,
+                                                     JMSStreamingSource.JMSStreamingSourceConfig config)
     throws JMSException {
     StructuredRecord.Builder recordBuilder = StructuredRecord
-      .builder(config.getSpecificSchema(config.getMessageType(), config.getSkipMessageHeaders()));
+      .builder(config.getSpecificSchema(config.getMessageType(), config.getRemoveMessageHeaders()));
     addHeaderData(recordBuilder, message, config);
     recordBuilder.set("payload", ((TextMessage) message).getText());
     return recordBuilder.build();
   }
 
-  private static StructuredRecord convertByteMessage(Message message, JMSStreamingSourceConfig config)
+  private static StructuredRecord convertByteMessage(Message message,
+                                                     JMSStreamingSource.JMSStreamingSourceConfig config)
     throws JMSException {
     StructuredRecord.Builder recordBuilder = StructuredRecord
-      .builder(config.getSpecificSchema(config.getMessageType(), config.getSkipMessageHeaders()));
+      .builder(config.getSpecificSchema(config.getMessageType(), config.getRemoveMessageHeaders()));
     addHeaderData(recordBuilder, message, config);
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     byte[] buffer = new byte[8096];
@@ -92,10 +95,10 @@ public class JMSSourceUtils {
     return recordBuilder.build();
   }
 
-  private static StructuredRecord convertMapMessage(Message message, JMSStreamingSourceConfig config)
+  private static StructuredRecord convertMapMessage(Message message, JMSStreamingSource.JMSStreamingSourceConfig config)
     throws JMSException {
     StructuredRecord.Builder recordBuilder = StructuredRecord
-      .builder(config.getSpecificSchema(config.getMessageType(), config.getSkipMessageHeaders()));
+      .builder(config.getSpecificSchema(config.getMessageType(), config.getRemoveMessageHeaders()));
     addHeaderData(recordBuilder, message, config);
     LinkedHashMap<String, Object> mapPayload = new LinkedHashMap<String, Object>();
     Enumeration<String> names = ((MapMessage) message).getMapNames();
@@ -107,10 +110,11 @@ public class JMSSourceUtils {
     return recordBuilder.build();
   }
 
-  private static StructuredRecord convertPureMessage(Message message, JMSStreamingSourceConfig config)
+  private static StructuredRecord convertPureMessage(Message message,
+                                                     JMSStreamingSource.JMSStreamingSourceConfig config)
     throws JMSException {
     StructuredRecord.Builder recordBuilder = StructuredRecord
-      .builder(config.getSpecificSchema(config.getMessageType(), config.getSkipMessageHeaders()));
+      .builder(config.getSpecificSchema(config.getMessageType(), config.getRemoveMessageHeaders()));
     addHeaderData(recordBuilder, message, config);
     HashMap<String, String> payload = new HashMap<>();
     Enumeration<String> names = ((Message) message).getPropertyNames();
@@ -123,31 +127,32 @@ public class JMSSourceUtils {
   }
 
   private static void addHeaderData(StructuredRecord.Builder recordBuilder, Message message,
-                                    JMSStreamingSourceConfig config) throws JMSException {
+                                    JMSStreamingSource.JMSStreamingSourceConfig config) throws JMSException {
     recordBuilder
-      .set(JMSStreamingSourceConfig.MESSAGE_ID, Strings.isNullOrEmpty(message.getJMSMessageID()) ? "" :
-        message.getJMSMessageID());
+      .set(JMSStreamingSource.JMSStreamingSourceConfig.MESSAGE_ID,
+           Strings.isNullOrEmpty(message.getJMSMessageID()) ? "" : message.getJMSMessageID());
     recordBuilder
-      .set(JMSStreamingSourceConfig.MESSAGE_TIMESTAMP, message.getJMSTimestamp());
+      .set(JMSStreamingSource.JMSStreamingSourceConfig.MESSAGE_TIMESTAMP, message.getJMSTimestamp());
     recordBuilder
-      .set(JMSStreamingSourceConfig.CORRELATION_ID,
+      .set(JMSStreamingSource.JMSStreamingSourceConfig.CORRELATION_ID,
            Strings.isNullOrEmpty(message.getJMSCorrelationID()) ? "" : message.getJMSCorrelationID());
     recordBuilder
-      .set(JMSStreamingSourceConfig.REPLY_TO, message.getJMSReplyTo() == null ? "" :
+      .set(JMSStreamingSource.JMSStreamingSourceConfig.REPLY_TO, message.getJMSReplyTo() == null ? "" :
         message.getJMSReplyTo().toString());
     recordBuilder
-      .set(JMSStreamingSourceConfig.DESTINATION,
+      .set(JMSStreamingSource.JMSStreamingSourceConfig.DESTINATION,
            Strings.isNullOrEmpty(message.getJMSDestination().toString()) ? "" :
              message.getJMSDestination().toString());
     recordBuilder
-      .set(JMSStreamingSourceConfig.DELIVERY_MODE, message.getJMSDeliveryMode());
+      .set(JMSStreamingSource.JMSStreamingSourceConfig.DELIVERY_MODE, message.getJMSDeliveryMode());
     recordBuilder
-      .set(JMSStreamingSourceConfig.REDELIVERED, message.getJMSRedelivered());
+      .set(JMSStreamingSource.JMSStreamingSourceConfig.REDELIVERED, message.getJMSRedelivered());
     recordBuilder
-      .set(JMSStreamingSourceConfig.TYPE, Strings.isNullOrEmpty(message.getJMSType()) ? "" : message.getJMSType());
+      .set(JMSStreamingSource.JMSStreamingSourceConfig.TYPE,
+           Strings.isNullOrEmpty(message.getJMSType()) ? "" : message.getJMSType());
     recordBuilder
-      .set(JMSStreamingSourceConfig.EXPIRATION, message.getJMSExpiration());
+      .set(JMSStreamingSource.JMSStreamingSourceConfig.EXPIRATION, message.getJMSExpiration());
     recordBuilder
-      .set(JMSStreamingSourceConfig.PRIORITY, message.getJMSPriority());
+      .set(JMSStreamingSource.JMSStreamingSourceConfig.PRIORITY, message.getJMSPriority());
   }
 }
