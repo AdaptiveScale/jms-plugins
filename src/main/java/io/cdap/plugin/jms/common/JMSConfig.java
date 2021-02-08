@@ -1,14 +1,17 @@
 package io.cdap.plugin.jms.common;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
+import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.plugin.common.ReferencePluginConfig;
 
 import javax.annotation.Nullable;
 
 /**
- * Base config for JMS plugins. todo: fix this
+ * Base config for JMS plugins.
  */
 public class JMSConfig extends ReferencePluginConfig {
 
@@ -75,64 +78,93 @@ public class JMSConfig extends ReferencePluginConfig {
   public String messageType; // default: Text
 
 
-  public JMSConfig() {
-    super("");
+  public JMSConfig(String referenceName) {
+    super(referenceName);
     this.connectionFactory = "ConnectionFactory";
     this.type = JMSDataStructure.QUEUE.getName();
-    this.messageType = JMSMessageType.TEXT.getName();
+    this.messageType = JMSMessageType.TEXT;
+    this.jndiContextFactory = "org.apache.activemq.jndi.ActiveMQInitialContextFactory";
+
   }
 
-//  @VisibleForTesting
-//  public JMSConfig(String referenceName, String connectionFactory, String jmsUsername, String jmsPassword,
-//                   String providerUrl, String type, String jndiContextFactory, String jndiUsername,
-//                   String jndiPassword,
-//                   String messageType) {
-//    super(referenceName);
-//    this.connectionFactory = Strings.isNullOrEmpty(connectionFactory) ? "ConnectionFactory" : connectionFactory;
-//    this.jmsUsername = jmsUsername;
-//    this.jmsPassword = jmsPassword;
-//    this.providerUrl = providerUrl;
-//    this.type = Strings.isNullOrEmpty(type) ? JMSDataStructure.QUEUE.getName() : type;
-//    this.jndiContextFactory = Strings.isNullOrEmpty(jndiContextFactory) ?
-//      "org.apache.activemq.jndi.ActiveMQInitialContextFactory" : jndiContextFactory;
-//    this.jndiUsername = jndiUsername;
-//    this.jndiPassword = jndiPassword;
-//    this.messageType = Strings.isNullOrEmpty(messageType) ? JMSMessageType.TEXT.getName() : messageType;
-//  }
+  @VisibleForTesting
+  public JMSConfig(String referenceName, String connectionFactory, String jmsUsername, String jmsPassword,
+                   String providerUrl, String type, String jndiContextFactory, String jndiUsername,
+                   String jndiPassword, String messageType) {
+    super(referenceName);
+    this.connectionFactory = connectionFactory;
+    this.jmsUsername = jmsUsername;
+    this.jmsPassword = jmsPassword;
+    this.providerUrl = providerUrl;
+    this.type = type;
+    this.jndiContextFactory = jndiContextFactory;
+    this.jndiUsername = jndiUsername;
+    this.jndiPassword = jndiPassword;
+    this.messageType = messageType;
+  }
 
-//  public String getConnectionFactory() {
-//    return connectionFactory;
-//  }
-//
-//  public String getJmsUsername() {
-//    return jmsUsername;
-//  }
-//
-//  public String getJmsPassword() {
-//    return jmsPassword;
-//  }
-//
-//  public String getProviderUrl() {
-//    return providerUrl;
-//  }
-//
-//  public String getType() {
-//    return type;
-//  }
-//
-//  public String getJndiContextFactory() {
-//    return jndiContextFactory;
-//  }
-//
-//  public String getJndiUsername() {
-//    return jndiUsername;
-//  }
-//
-//  public String getJndiPassword() {
-//    return jndiPassword;
-//  }
-//
-//  public String getMessageType() {
-//    return messageType;
-//  }
+  public String getConnectionFactory() {
+    return connectionFactory;
+  }
+
+  public String getJmsUsername() {
+    return jmsUsername;
+  }
+
+  public String getJmsPassword() {
+    return jmsPassword;
+  }
+
+  public String getProviderUrl() {
+    return providerUrl;
+  }
+
+  public String getType() {
+    return type;
+  }
+
+  public String getJndiContextFactory() {
+    return jndiContextFactory;
+  }
+
+  public String getJndiUsername() {
+    return jndiUsername;
+  }
+
+  public String getJndiPassword() {
+    return jndiPassword;
+  }
+
+  public String getMessageType() {
+    return messageType;
+  }
+
+  public void validate(FailureCollector failureCollector) {
+
+    if (Strings.isNullOrEmpty(jmsUsername) && !containsMacro(NAME_JMS_USERNAME)) {
+      failureCollector
+        .addFailure("JMS username must be provided.", "Please provide your JMS username.")
+        .withConfigProperty(NAME_JMS_USERNAME);
+    }
+
+    if (Strings.isNullOrEmpty(jmsPassword) && !containsMacro(NAME_JMS_PASSWORD)) {
+      failureCollector
+        .addFailure("JMS password must be provided.", "Please provide your JMS password.")
+        .withConfigProperty(NAME_JMS_PASSWORD);
+    }
+
+    if (Strings.isNullOrEmpty(jndiContextFactory) && !containsMacro(NAME_JNDI_CONTEXT_FACTORY)) {
+      failureCollector
+        .addFailure("JNDI context factory must be provided.", "Please provide your JNDI" +
+          " context factory.")
+        .withConfigProperty(NAME_JNDI_CONTEXT_FACTORY);
+    }
+
+    if (Strings.isNullOrEmpty(providerUrl) && !containsMacro(NAME_PROVIDER_URL)) {
+      failureCollector
+        .addFailure("Provider URL must be provided.", "Please provide your provider URL.")
+        .withConfigProperty(NAME_PROVIDER_URL);
+    }
+  }
+
 }

@@ -19,20 +19,10 @@ package io.cdap.plugin.jms.common;
 /**
  * An Enum specifying JMS message types.
  */
-public enum JMSMessageType {
-  MESSAGE("Message"),
-  TEXT("Text"),
-  BYTES("Bytes"),
-  MAP("Map"),
-  OBJECT("Object");
-
-  private String messageType;
-
-  JMSMessageType(String messageType) {
-    this.messageType = messageType;
-  }
-
-  public String getName() {
-    return messageType;
-  }
+public class JMSMessageType {
+  public static final String MESSAGE = "Message";
+  public static final String TEXT = "Text";
+  public static final String BYTES = "Bytes";
+  public static final String MAP = "Map";
+  public static final String OBJECT = "Object";
 }

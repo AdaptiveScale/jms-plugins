@@ -23,11 +23,13 @@ import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.plugin.jms.common.JMSConfig;
 
+import java.io.Serializable;
+
 /**
  * Holds configuration required for configuring {@link io.cdap.plugin.jms.source.JMSSourceUtils;} and
  * {@link JMSBatchSink}.
  */
-public class JMSBatchSinkConfig extends JMSConfig {
+public class JMSBatchSinkConfig extends JMSConfig implements Serializable {
 
   // Params
   public static final String NAME_DESTINATION = "destinationName";
@@ -39,25 +41,27 @@ public class JMSBatchSinkConfig extends JMSConfig {
   private String destinationName;
 
   public JMSBatchSinkConfig() {
-    super();
+    super("");
   }
 
-//  public JMSBatchSinkConfig(String referenceName, String connectionFactory, String jmsUsername,
-//                                  String jmsPassword, String providerUrl, String type, String jndiContextFactory,
-//                                  String jndiUsername, String jndiPassword, String messageType) {
-//    super(referenceName, connectionFactory, jmsUsername, jmsPassword, providerUrl, type, jndiContextFactory,
-//          jndiUsername, jndiPassword, messageType);
-//    this.destinationName = destinationName;
-//  }
+  public JMSBatchSinkConfig(String referenceName, String connectionFactory, String jmsUsername,
+                            String jmsPassword, String providerUrl, String type, String jndiContextFactory,
+                            String jndiUsername, String jndiPassword, String messageType) {
+    super(referenceName, connectionFactory, jmsUsername, jmsPassword, providerUrl, type, jndiContextFactory,
+          jndiUsername, jndiPassword, messageType);
+    this.destinationName = destinationName;
+  }
 
   public String getDestinationName() {
     return destinationName;
   }
 
-  public void validate(FailureCollector failureCollector) {
+  public void validateParams(FailureCollector failureCollector) {
+    validate(failureCollector);
+
     if (Strings.isNullOrEmpty(destinationName) && !containsMacro(NAME_DESTINATION)) {
       failureCollector
-        .addFailure("Destination must be provided.", "Please provide your topic/queue name.")
+        .addFailure("The destination topic/queue name must be provided!", "Provide your topic/queue name.")
         .withConfigProperty(NAME_DESTINATION);
     }
   }

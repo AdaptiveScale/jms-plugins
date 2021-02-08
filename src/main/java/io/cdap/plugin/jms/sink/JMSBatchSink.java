@@ -36,8 +36,7 @@ import java.io.IOException;
 import java.util.stream.Collectors;
 
 /**
- * This class <code>JMSBatchSink</code> is a plugin that allows producing <code>StructuredRecords</code> to
- * a JMS Queue or Topic.
+ * A class that produces {@link StructuredRecord} to a JMS Queue or Topic.
  */
 @Plugin(type = BatchSink.PLUGIN_TYPE)
 @Name("JMS")

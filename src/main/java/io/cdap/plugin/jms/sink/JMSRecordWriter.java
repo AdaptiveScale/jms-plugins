@@ -64,7 +64,7 @@ public class JMSRecordWriter extends RecordWriter<NullWritable, Text> {
   @Override
   public void write(NullWritable key, Text text) {
     try {
-      if (jmsConfig.getMessageType().equals(JMSMessageType.MAP.getName())) {
+      if (jmsConfig.getMessageType().equals(JMSMessageType.MAP)) {
         HashMap<String, Object> map = GSON.fromJson(text.toString(), new HashMap<String, Object>().getClass());
         MapMessage mapMessage = session.createMapMessage();
         map.forEach((k, v) -> {

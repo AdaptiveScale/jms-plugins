@@ -37,13 +37,13 @@ import javax.naming.Context;
  */
 public class JMSReceiver extends Receiver<StructuredRecord> implements MessageListener {
   private static final Logger LOG = LoggerFactory.getLogger(JMSReceiver.class);
-  private JMSStreamingSource.JMSStreamingSourceConfig config;
+  private JMSStreamingSourceConfig config;
   private Connection connection;
   private StorageLevel storageLevel;
   private Session session;
   private JMSConnection jmsConnection;
 
-  public JMSReceiver(StorageLevel storageLevel, JMSStreamingSource.JMSStreamingSourceConfig config) {
+  public JMSReceiver(StorageLevel storageLevel, JMSStreamingSourceConfig config) {
     super(storageLevel);
     this.storageLevel = storageLevel;
     this.config = config;

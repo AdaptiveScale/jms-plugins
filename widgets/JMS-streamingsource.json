@@ -98,7 +98,8 @@
               "Message",
               "Text",
               "Bytes",
-              "Map"
+              "Map",
+              "Object"
             ],
             "default": "Text"
           }
