@@ -23,66 +23,57 @@ public class JMSConfig extends ReferencePluginConfig {
   public static final String NAME_JNDI_CONTEXT_FACTORY = "jndiContextFactory";
   public static final String NAME_JNDI_USERNAME = "jndiUsername";
   public static final String NAME_JNDI_PASSWORD = "jndiPassword";
-  public static final String NAME_MESSAGE_TYPE = "messageType";
 
   @Name(NAME_CONNECTION_FACTORY)
   @Description("Name of the connection factory.")
   @Nullable
   @Macro
-  public String connectionFactory; // default: ConnectionFactory
+  private String connectionFactory; // default: ConnectionFactory
 
   @Name(NAME_JMS_USERNAME)
   @Description("Username to connect to JMS.")
   @Macro
-  public String jmsUsername;
+  private String jmsUsername;
 
   @Name(NAME_JMS_PASSWORD)
   @Description("Password to connect to JMS.")
   @Macro
-  public String jmsPassword;
+  private String jmsPassword;
 
   @Name(NAME_PROVIDER_URL)
   @Description("The URL of the JMS provider. For example, in case of an ActiveMQ Provider, the URL has the format " +
     "tcp://hostname:61616.")
   @Macro
-  public String providerUrl;
+  private String providerUrl;
 
   @Name(NAME_TYPE)
   @Description("Queue or Topic.")
   @Nullable
   @Macro
-  public String type; // default: queue
+  private String type; // default: queue
 
   @Name(NAME_JNDI_CONTEXT_FACTORY)
   @Description("Name of the JNDI context factory. For example, in case of an ActiveMQ Provider, the JNDI Context " +
     "Factory is: org.apache.activemq.jndi.ActiveMQInitialContextFactory.")
   @Macro
-  public String jndiContextFactory; // default: org.apache.activemq.jndi.ActiveMQInitialContextFactory
+  private String jndiContextFactory; // default: org.apache.activemq.jndi.ActiveMQInitialContextFactory
 
   @Name(NAME_JNDI_USERNAME)
   @Description("User name for the JNDI.")
   @Nullable
   @Macro
-  public String jndiUsername;
+  private String jndiUsername;
 
   @Name(NAME_JNDI_PASSWORD)
   @Description("Password for the JNDI.")
   @Nullable
   @Macro
-  public String jndiPassword;
-
-  @Name(NAME_MESSAGE_TYPE)
-  @Description("Supports the following message types: Message, Text, Bytes, Map.")
-  @Nullable
-  @Macro
-  public String messageType; // default: Text
-
+  private String jndiPassword;
 
   public JMSConfig(String referenceName) {
     super(referenceName);
     this.connectionFactory = "ConnectionFactory";
     this.type = JMSDataStructure.QUEUE.getName();
-    this.messageType = JMSMessageType.TEXT;
     this.jndiContextFactory = "org.apache.activemq.jndi.ActiveMQInitialContextFactory";
 
   }
@@ -90,7 +81,7 @@ public class JMSConfig extends ReferencePluginConfig {
   @VisibleForTesting
   public JMSConfig(String referenceName, String connectionFactory, String jmsUsername, String jmsPassword,
                    String providerUrl, String type, String jndiContextFactory, String jndiUsername,
-                   String jndiPassword, String messageType) {
+                   String jndiPassword) {
     super(referenceName);
     this.connectionFactory = connectionFactory;
     this.jmsUsername = jmsUsername;
@@ -100,7 +91,7 @@ public class JMSConfig extends ReferencePluginConfig {
     this.jndiContextFactory = jndiContextFactory;
     this.jndiUsername = jndiUsername;
     this.jndiPassword = jndiPassword;
-    this.messageType = messageType;
+
   }
 
   public String getConnectionFactory() {
@@ -133,10 +124,6 @@ public class JMSConfig extends ReferencePluginConfig {
 
   public String getJndiPassword() {
     return jndiPassword;
-  }
-
-  public String getMessageType() {
-    return messageType;
   }
 
   public void validate(FailureCollector failureCollector) {

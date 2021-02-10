@@ -61,7 +61,7 @@ public class JMSPluginTest {
   public void testValidFSProperties() throws NoSuchFieldException {
     JMSConfig jmsConfig = getValidConfig("{\"key\":\"val\"}");
     MockFailureCollector collector = new MockFailureCollector("jms_failure_collector");
-    ((JMSStreamingSourceConfig)jmsConfig).validateParams(collector);
+    ((JMSStreamingSourceConfig) jmsConfig).validateParams(collector);
     Assert.assertEquals(0, collector.getValidationFailures().size());
   }
 
@@ -69,7 +69,7 @@ public class JMSPluginTest {
   public void testInvalidFSProperties() throws NoSuchFieldException {
     JMSConfig jmsConfig = getInvalidConfig("{\"key\":\"val\"}");
     MockFailureCollector collector = new MockFailureCollector("jms_failure_collector");
-    ((JMSStreamingSourceConfig)jmsConfig).validateParams(collector);
+    ((JMSStreamingSourceConfig) jmsConfig).validateParams(collector);
     Assert.assertEquals(1, collector.getValidationFailures().size());
   }
 }

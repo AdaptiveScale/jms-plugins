@@ -22,8 +22,10 @@ import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.plugin.jms.common.JMSConfig;
+import io.cdap.plugin.jms.common.JMSMessageType;
 
 import java.io.Serializable;
+import javax.annotation.Nullable;
 
 /**
  * Holds configuration required for configuring {@link io.cdap.plugin.jms.source.JMSSourceUtils;} and
@@ -33,6 +35,7 @@ public class JMSBatchSinkConfig extends JMSConfig implements Serializable {
 
   // Params
   public static final String NAME_DESTINATION = "destinationName";
+  public static final String NAME_MESSAGE_TYPE = "messageType";
 
   @Name(NAME_DESTINATION)
   @Description("Name of the destination Queue/Topic. If the given Queue/Topic name is not resolved, a new " +
@@ -40,16 +43,24 @@ public class JMSBatchSinkConfig extends JMSConfig implements Serializable {
   @Macro
   private String destinationName;
 
+  @Name(NAME_MESSAGE_TYPE)
+  @Description("Supports the following message types: Message, Text, Bytes, Map.")
+  @Nullable
+  @Macro
+  private String messageType; // default: Text
+
   public JMSBatchSinkConfig() {
     super("");
+    this.messageType = Strings.isNullOrEmpty(messageType) ? JMSMessageType.TEXT : messageType;
   }
 
   public JMSBatchSinkConfig(String referenceName, String connectionFactory, String jmsUsername,
                             String jmsPassword, String providerUrl, String type, String jndiContextFactory,
-                            String jndiUsername, String jndiPassword, String messageType) {
+                            String jndiUsername, String jndiPassword, String messageType, String destinationName) {
     super(referenceName, connectionFactory, jmsUsername, jmsPassword, providerUrl, type, jndiContextFactory,
-          jndiUsername, jndiPassword, messageType);
+          jndiUsername, jndiPassword);
     this.destinationName = destinationName;
+    this.messageType = messageType;
   }
 
   public String getDestinationName() {
@@ -65,4 +76,9 @@ public class JMSBatchSinkConfig extends JMSConfig implements Serializable {
         .withConfigProperty(NAME_DESTINATION);
     }
   }
+
+  public String getMessageType() {
+    return messageType;
+  }
+
 }

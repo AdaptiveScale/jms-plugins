@@ -17,7 +17,6 @@
 package io.cdap.plugin.jms.source;
 
 import com.google.common.base.Strings;
-import com.sun.javaws.exceptions.InvalidArgumentException;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.etl.api.streaming.StreamingContext;
 import io.cdap.plugin.jms.common.JMSMessageType;
@@ -25,7 +24,6 @@ import org.apache.commons.lang.SerializationUtils;
 import org.apache.spark.storage.StorageLevel;
 import org.apache.spark.streaming.api.java.JavaDStream;
 import org.apache.spark.streaming.receiver.Receiver;
-
 import java.io.ByteArrayOutputStream;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -163,7 +161,8 @@ public class JMSSourceUtils {
    * @return the {@link StructuredRecord} built out of the JMS {@link ObjectMessage} fields
    * @throws JMSException in case the method fails to read fields from the JMS message
    */
-  private static StructuredRecord convertJMSObjectMessage(Message message, JMSStreamingSourceConfig config) throws JMSException {
+  private static StructuredRecord convertJMSObjectMessage(Message message, JMSStreamingSourceConfig config)
+    throws JMSException {
     StructuredRecord.Builder recordBuilder = StructuredRecord
       .builder(config.getSpecificSchema(config.getMessageType(), config.getRemoveMessageHeaders()));
     if (!config.getRemoveMessageHeaders()) {

@@ -36,6 +36,8 @@ public class JMSStreamingSourceConfig extends JMSConfig implements Serializable 
   public static final String NAME_SOURCE = "sourceName";
   public static final String NAME_SCHEMA = "schema";
   public static final String NAME_REMOVE_MESSAGE_HEADERS = "removeMessageHeaders";
+  public static final String NAME_MESSAGE_TYPE = "messageType";
+
 
   @Name(NAME_SOURCE)
   @Description("Name of the source Queue/Topic. The Queue/Topic with the given name, should exist in order to read " +
@@ -53,20 +55,28 @@ public class JMSStreamingSourceConfig extends JMSConfig implements Serializable 
   @Description("Specifies the schema of the records outputted from this plugin.")
   private String schema;
 
+  @Name(NAME_MESSAGE_TYPE)
+  @Description("Supports the following message types: Message, Text, Bytes, Map, Object.")
+  @Nullable
+  @Macro
+  private String messageType; // default: Text
+
   public JMSStreamingSourceConfig() {
     super("");
     this.removeMessageHeaders = Strings.isNullOrEmpty(removeMessageHeaders) ? "false" : removeMessageHeaders;
+    this.messageType = Strings.isNullOrEmpty(messageType) ? JMSMessageType.TEXT : messageType;
   }
 
   @VisibleForTesting
   public JMSStreamingSourceConfig(String referenceName, String connectionFactory, String jmsUsername,
                                   String jmsPassword, String providerUrl, String type, String jndiContextFactory,
                                   String jndiUsername, String jndiPassword, String removeMessageHeaders,
-                                  String messageType) {
+                                  String messageType, String sourceName) {
     super(referenceName, connectionFactory, jmsUsername, jmsPassword, providerUrl, type, jndiContextFactory,
-          jndiUsername, jndiPassword, messageType);
+          jndiUsername, jndiPassword);
     this.sourceName = sourceName;
     this.removeMessageHeaders = removeMessageHeaders;
+    this.messageType = messageType;
   }
 
   public void validateParams(FailureCollector failureCollector) {
@@ -77,13 +87,24 @@ public class JMSStreamingSourceConfig extends JMSConfig implements Serializable 
         .addFailure("The source topic/queue name must be provided!", "Provide your topic/queue name.")
         .withConfigProperty(NAME_SOURCE);
     }
+    if (Strings.isNullOrEmpty(messageType) && !containsMacro(NAME_SOURCE)) {
+      failureCollector
+        .addFailure("The source topic/queue name must be provided!", "Provide your topic/queue name.")
+        .withConfigProperty(NAME_SOURCE);
+    }
   }
+
   public boolean getRemoveMessageHeaders() {
     return this.removeMessageHeaders.equalsIgnoreCase("true");
   }
 
   public String getSourceName() {
     return sourceName;
+  }
+
+  @Nullable
+  public String getMessageType() {
+    return messageType;
   }
 
   public Schema getSpecificSchema(String type, boolean removeMessageHeaders) {
@@ -113,8 +134,8 @@ public class JMSStreamingSourceConfig extends JMSConfig implements Serializable 
         baseSchemaFields.add(Schema.Field.of("payload", Schema.arrayOf(Schema.of(Schema.Type.BYTES))));
         return Schema.recordOf("message", baseSchemaFields);
       case JMSMessageType.MAP:
-        baseSchemaFields.add(Schema.Field.of("payload",
-                                             Schema.mapOf(Schema.of(Schema.Type.STRING), Schema.of(Schema.Type.STRING))));
+        baseSchemaFields.add(Schema.Field.of("payload", Schema.mapOf(Schema.of(Schema.Type.STRING),
+                                                                     Schema.of(Schema.Type.STRING))));
         return Schema.recordOf("message", baseSchemaFields);
       case JMSMessageType.OBJECT:
         baseSchemaFields.add(Schema.Field.of("payload", Schema.arrayOf(Schema.of(Schema.Type.BYTES))));

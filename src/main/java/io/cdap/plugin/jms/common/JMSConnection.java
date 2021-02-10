@@ -52,7 +52,6 @@ public class JMSConnection {
     this.config = config;
   }
 
-  
   public Context getContext() {
     Properties properties = new Properties();
     properties.put(Context.INITIAL_CONTEXT_FACTORY, config.getJndiContextFactory());
@@ -97,11 +96,24 @@ public class JMSConnection {
   }
 
   public Connection createConnection(ConnectionFactory factory) {
+    Connection connection = null;
     try {
-      return factory.createConnection(config.getJmsUsername(), config.getJmsPassword());
+      connection = factory.createConnection(config.getJmsUsername(), config.getJmsPassword());
     } catch (JMSException e) {
       throw new RuntimeException(String.format("%s: %s", e.getErrorCode(), e.getMessage()));
     }
+    // If subscribing to a source topic, create a durable subscriber
+    if (config.getType().equals(JMSDataStructure.TOPIC.getName())) {
+      try {
+        if (config instanceof JMSStreamingSourceConfig) {
+          String clientId = "client-id-" + ((JMSStreamingSourceConfig) config).getSourceName();
+          connection.setClientID(clientId);
+        }
+      } catch (JMSException e) {
+        throw new RuntimeException("Cannot set Client Id", e);
+      }
+    }
+    return connection;
   }
 
   public void startConnection(Connection connection) {
@@ -202,11 +214,18 @@ public class JMSConnection {
   }
 
   public MessageConsumer createConsumer(Session session, Destination destination) {
+    MessageConsumer messageConsumer = null;
     try {
-      return session.createConsumer(destination);
+      if (destination instanceof Topic) {
+        String clientId = "client-id-" + ((JMSStreamingSourceConfig) config).getSourceName();
+        messageConsumer = session.createDurableSubscriber((Topic) destination, clientId);
+      } else {
+        messageConsumer = session.createConsumer(destination);
+      }
     } catch (JMSException e) {
       throw new RuntimeException(String.format("%s: %s", e.getErrorCode(), e.getMessage()));
     }
+    return messageConsumer;
   }
 
   public MessageProducer createProducer(Session session, Destination destination) {

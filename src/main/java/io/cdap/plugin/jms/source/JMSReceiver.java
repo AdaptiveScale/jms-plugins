@@ -55,6 +55,7 @@ public class JMSReceiver extends Receiver<StructuredRecord> implements MessageLi
     Context context = jmsConnection.getContext();
     ConnectionFactory factory = jmsConnection.getConnectionFactory(context);
     connection = jmsConnection.createConnection(factory);
+
     session = jmsConnection.createSession(connection);
     Destination destination = jmsConnection.getSource(context);
     MessageConsumer messageConsumer = jmsConnection.createConsumer(session, destination);
