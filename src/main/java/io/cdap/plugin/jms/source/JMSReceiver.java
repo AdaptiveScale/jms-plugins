@@ -26,9 +26,11 @@ import org.slf4j.LoggerFactory;
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
 import javax.jms.Destination;
+import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageConsumer;
 import javax.jms.MessageListener;
+import javax.jms.Queue;
 import javax.jms.Session;
 import javax.naming.Context;
 
@@ -61,6 +63,11 @@ public class JMSReceiver extends Receiver<StructuredRecord> implements MessageLi
     MessageConsumer messageConsumer = jmsConnection.createConsumer(session, destination);
     jmsConnection.setMessageListener(this, messageConsumer);
     jmsConnection.startConnection(connection);
+
+    // fetch the entire queue events
+    if (destination instanceof Queue) {
+      fetchEntireQueue(messageConsumer);
+    }
   }
 
   @Override
@@ -77,6 +84,21 @@ public class JMSReceiver extends Receiver<StructuredRecord> implements MessageLi
     } catch (Exception e) {
       LOG.error("Message couldn't get stored in the Spark memory.", e);
       throw new RuntimeException(e);
+    }
+  }
+
+  private void fetchEntireQueue(MessageConsumer messageConsumer) {
+    while (true) {
+      try {
+        Message message = messageConsumer.receive(5000);
+        if (message != null) {
+          store(JMSSourceUtils.convertMessage(message, this.config));
+        } else {
+          break;
+        }
+      } catch (JMSException e) {
+        throw new RuntimeException(String.format("%s: %s", e.getErrorCode(), e.getMessage()));
+      }
     }
   }
 }

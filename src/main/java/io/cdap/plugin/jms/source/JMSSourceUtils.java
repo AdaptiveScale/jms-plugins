@@ -92,12 +92,12 @@ public class JMSSourceUtils {
    * @return the {@link StructuredRecord} built out of the JMS {@link TextMessage} fields
    * @throws JMSException in case the method fails to read fields from the JMS message
    */
-  private static StructuredRecord convertJMSTextMessage(Message message, JMSStreamingSourceConfig config)
+   public static StructuredRecord convertJMSTextMessage(Message message, JMSStreamingSourceConfig config)
     throws JMSException {
     StructuredRecord.Builder recordBuilder = StructuredRecord
       .builder(config.getSpecificSchema(config.getMessageType(), config.getRemoveMessageHeaders()));
     if (!config.getRemoveMessageHeaders()) {
-      addHeaderData(recordBuilder, message, config);
+      addHeaderData(recordBuilder, message);
     }
     recordBuilder.set("payload", ((TextMessage) message).getText());
     return recordBuilder.build();
@@ -111,12 +111,12 @@ public class JMSSourceUtils {
    * @return the {@link StructuredRecord} built out of the JMS {@link MapMessage} fields
    * @throws JMSException in case the method fails to read fields from the JMS message
    */
-  private static StructuredRecord convertJMSMapMessage(Message message, JMSStreamingSourceConfig config)
+  public static StructuredRecord convertJMSMapMessage(Message message, JMSStreamingSourceConfig config)
     throws JMSException {
     StructuredRecord.Builder recordBuilder = StructuredRecord
       .builder(config.getSpecificSchema(config.getMessageType(), config.getRemoveMessageHeaders()));
     if (!config.getRemoveMessageHeaders()) {
-      addHeaderData(recordBuilder, message, config);
+      addHeaderData(recordBuilder, message);
     }
     LinkedHashMap<String, Object> mapPayload = new LinkedHashMap<String, Object>();
     Enumeration<String> names = ((MapMessage) message).getMapNames();
@@ -136,12 +136,12 @@ public class JMSSourceUtils {
    * @return the {@link StructuredRecord} built out of the JMS {@link BytesMessage} fields
    * @throws JMSException in case the method fails to read fields from the JMS message
    */
-  private static StructuredRecord convertJMSByteMessage(Message message, JMSStreamingSourceConfig config)
+  public static StructuredRecord convertJMSByteMessage(Message message, JMSStreamingSourceConfig config)
     throws JMSException {
     StructuredRecord.Builder recordBuilder = StructuredRecord
       .builder(config.getSpecificSchema(config.getMessageType(), config.getRemoveMessageHeaders()));
     if (!config.getRemoveMessageHeaders()) {
-      addHeaderData(recordBuilder, message, config);
+      addHeaderData(recordBuilder, message);
     }
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     byte[] buffer = new byte[8096];
@@ -161,12 +161,12 @@ public class JMSSourceUtils {
    * @return the {@link StructuredRecord} built out of the JMS {@link ObjectMessage} fields
    * @throws JMSException in case the method fails to read fields from the JMS message
    */
-  private static StructuredRecord convertJMSObjectMessage(Message message, JMSStreamingSourceConfig config)
+  public static StructuredRecord convertJMSObjectMessage(Message message, JMSStreamingSourceConfig config)
     throws JMSException {
     StructuredRecord.Builder recordBuilder = StructuredRecord
       .builder(config.getSpecificSchema(config.getMessageType(), config.getRemoveMessageHeaders()));
     if (!config.getRemoveMessageHeaders()) {
-      addHeaderData(recordBuilder, message, config);
+      addHeaderData(recordBuilder, message);
     }
     byte[] payload = SerializationUtils.serialize(((ObjectMessage) message).getObject());
     recordBuilder.set("payload", payload);
@@ -181,12 +181,12 @@ public class JMSSourceUtils {
    * @return the {@link StructuredRecord} built out of the JMS {@link Message} fields
    * @throws JMSException in case the method fails to read fields from the JMS message
    */
-  private static StructuredRecord convertJMSMessage(Message message, JMSStreamingSourceConfig config)
+  public static StructuredRecord convertJMSMessage(Message message, JMSStreamingSourceConfig config)
     throws JMSException {
     StructuredRecord.Builder recordBuilder = StructuredRecord
       .builder(config.getSpecificSchema(config.getMessageType(), config.getRemoveMessageHeaders()));
     if (!config.getRemoveMessageHeaders()) {
-      addHeaderData(recordBuilder, message, config);
+      addHeaderData(recordBuilder, message);
     }
     HashMap<String, String> payload = new HashMap<>();
     Enumeration<String> names = ((Message) message).getPropertyNames();
@@ -203,16 +203,14 @@ public class JMSSourceUtils {
    *
    * @param recordBuilder the {@link StructuredRecord.Builder} we insert header data into
    * @param message the incoming JMS message
-   * @param config the {@link JMSStreamingSourceConfig} with all user provided property valuess
    * @throws JMSException in case the method fails to read fields from the JMS message
    */
-  private static void addHeaderData(StructuredRecord.Builder recordBuilder, Message message,
-                                    JMSStreamingSourceConfig config) throws JMSException {
+  private static void addHeaderData(StructuredRecord.Builder recordBuilder, Message message) throws JMSException {
 
-    if (Strings.isNullOrEmpty(message.getJMSMessageID())) {
+    if (!Strings.isNullOrEmpty(message.getJMSMessageID())) {
       recordBuilder.set(JMSStreamingSourceConfig.MESSAGE_ID, message.getJMSMessageID());
     }
-    if (Strings.isNullOrEmpty(message.getJMSCorrelationID())) {
+    if (!Strings.isNullOrEmpty(message.getJMSCorrelationID())) {
       recordBuilder.set(JMSStreamingSourceConfig.CORRELATION_ID, message.getJMSCorrelationID());
     }
     if (message.getJMSReplyTo() != null) {
@@ -221,7 +219,7 @@ public class JMSSourceUtils {
     if (message.getJMSDestination() != null) {
       recordBuilder.set(JMSStreamingSourceConfig.DESTINATION, message.getJMSDestination().toString());
     }
-    if (Strings.isNullOrEmpty(message.getJMSType())) {
+    if (!Strings.isNullOrEmpty(message.getJMSType())) {
       recordBuilder.set(JMSStreamingSourceConfig.TYPE, message.getJMSType());
     }
     recordBuilder.set(JMSStreamingSourceConfig.MESSAGE_TIMESTAMP, message.getJMSTimestamp());
